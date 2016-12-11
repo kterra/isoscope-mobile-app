@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "193225771488",
+    "firebase_url": "https://isoscope-f094c.firebaseio.com",
+    "project_id": "isoscope-f094c",
+    "storage_bucket": "isoscope-f094c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:193225771488:android:42519b7c0528057d",
+        "android_client_info": {
+          "package_name": "fgv.emap.kizzyterra.isoscope"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "193225771488-mhotase3kvbqdl171b5tktabvu2t9sjh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "fgv.emap.kizzyterra.isoscope",
+            "certificate_hash": "36F532601307AD392384F1C325C7F39A9FBA619D"
+          }
+        },
+        {
+          "client_id": "193225771488-j1ilm5dmn13h2sdirvq1qaakrrhhbc36.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyByjpcRLvC0RUOUTqmGV06gjmdsDjT4AJQ"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "193225771488-j1ilm5dmn13h2sdirvq1qaakrrhhbc36.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
