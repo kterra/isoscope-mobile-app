@@ -172,7 +172,7 @@ public class FirebaseManager {
                     LatLng coord = getPointByIndex(index);
 
                     if (coord != null && Integer.valueOf(value) > 0 ) {
-                        drawer.drawRegion(coord);
+                       // drawer.drawRegion(coord);
                     }
 
 

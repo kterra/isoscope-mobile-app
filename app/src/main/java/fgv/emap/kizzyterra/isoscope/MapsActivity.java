@@ -2,8 +2,10 @@ package fgv.emap.kizzyterra.isoscope;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.location.Address;
+import android.location.Geocoder;
+import android.os.AsyncTask;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,6 +14,7 @@ import android.view.View;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
+import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
@@ -19,25 +22,47 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
+import com.google.api.client.extensions.android.http.AndroidHttp;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.JsonObjectParser;
+import com.google.api.client.json.jackson.JacksonFactory;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, MapDrawerCallback, ConvexHullAlgorithm, OnMarkerClickListener {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, MapDrawerCallback, ConvexHullAlgorithm, OnMapLongClickListener, OnMarkerClickListener {
 
     private GoogleMap mMap;
     private static final float MAP_MIN_ZOOM = 10.5f;
     private static final float MAP_MAX_ZOOM = 14.0f;
     private String TAG = "Maps";
-    private FirebaseManager fireManager;
-    private PolygonOptions rectOptions;
+    //private FirebaseManager fireManager;
+    //private PolygonOptions rectOptions;
     private Polygon region;
-    private ArrayList<LatLng> regionPoints;
+    //private ArrayList<LatLng> regionPoints;
     private Marker lastMarkerClicked;
-
+    static final HttpTransport HTTP_TRANSPORT = AndroidHttp.newCompatibleTransport();
+    static final JsonFactory JSON_FACTORY = new JacksonFactory();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,16 +75,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onClick(View view) {
 
-                startActivity(new Intent(FilterActivity));
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                startActivity(new Intent(MapsActivity.this, FilterActivity.class));
+//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+//                        .setAction("Action", null).show();
             }
         });
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-        fireManager = new FirebaseManager(MapsActivity.this);
+
+        //fireManager = new FirebaseManager(MapsActivity.this);
 
     }
 
@@ -77,6 +103,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.setOnMarkerClickListener(this);
+        mMap.setOnMapLongClickListener(this);
 
         // Add a marker in Sydney and move the camera
         LatLng rio = new LatLng(-22.91541,-43.4258447);
@@ -88,10 +115,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //fireManager.removeAll();
         //fireManager.insertData(MapsActivity.this);
 
-        Log.d(TAG, "called getPoints");
-        fireManager.getGridPoints();
+        //Log.d(TAG, "called getPoints");
+        //fireManager.getGridPoints();
 
 
+//        GenericUrl directionsUrl = new GenericUrl("https://maps.googleapis.com/maps/api/directions/json");
+//        directionsUrl.put("origin", "Chicago,IL");
+//        directionsUrl.put("destination", "Los Angeles,CA");
+//        directionsUrl.put("sensor",false);
+//        directionsUrl.put("key","AIzaSyDgOs8KSdKtp8BU0cgH9oRlRVfuP07K7pM");
+//        Log.d(TAG, "TESTE1");
+//        //new GoogleApisRequesterTask().execute(url);
+//
+//        GenericUrl matrixDistanceUrl = new GenericUrl("https://maps.googleapis.com/maps/api/distancematrix/json");
+//        matrixDistanceUrl.put("origins", "Seattle");
+//        matrixDistanceUrl.put("destinations", "37.757815,-122.50764|48.4267596,-123.3934356");
+//        matrixDistanceUrl.put("key","AIzaSyDZWHoI__d9kG7QinJKdPk9mIQf0bo_FbU");
+//
+//        new GoogleApisRequesterTask().execute(matrixDistanceUrl);
 
 
     }
@@ -103,39 +144,45 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         mMap.clear();
 
-        regionPoints = new ArrayList<>();
         lastMarkerClicked = marker;
         mMap.addMarker(new MarkerOptions().position(lastMarkerClicked.getPosition()).snippet(lastMarkerClicked.getSnippet()));
+        LatLng origin = marker.getPosition();
+        new GetIsochroneTask().execute(origin.latitude, origin.longitude, 10.0);
 
-        String startPoint = String.valueOf(marker.getSnippet());
-        Integer timeLimit = 3000;
+//        String startPoint = String.valueOf(marker.getSnippet());
+//        Integer timeLimit = 3000;
 
-        fireManager.filterRegionByTime(startPoint, timeLimit);
+        //fireManager.filterRegionByTime(startPoint, timeLimit);
 
         return true;
     }
 
+    @Override
+    public void onMapLongClick (LatLng point){
+        mMap.clear();
+        Log.d(TAG,"LONGCLICK");
+        lastMarkerClicked =  drawMarker("100", point);
+    }
 
     @Override
-    public void drawMarker(String index, LatLng point) {
+    public Marker drawMarker(String index, LatLng point) {
 
-        mMap.addMarker(new MarkerOptions().position(point).snippet(index));
+       return mMap.addMarker(new MarkerOptions().position(point).snippet(index));
 
     }
 
     @Override
-    public void drawRegion(LatLng point) {
+    public void drawRegion(ArrayList<LatLng> regionPoints) {
 
         mMap.clear();
 
 
         mMap.addMarker(new MarkerOptions().position(lastMarkerClicked.getPosition()).snippet(lastMarkerClicked.getSnippet()));
 
-        rectOptions = new PolygonOptions()
+        PolygonOptions rectOptions = new PolygonOptions()
                 .strokeWidth(2.0f)
                 .fillColor(Color.argb(150, 102, 140, 255))
                 .strokeColor(Color.argb(150, 102, 140, 255));
-        regionPoints.add(point);
         ArrayList<LatLng> convexHullPoints =  getConvexHull(regionPoints);
         for (LatLng p : convexHullPoints){
             rectOptions.add(p);
@@ -217,5 +264,401 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         public int compare(LatLng o1, LatLng o2) {
             return (new Float(o1.latitude)).compareTo(new Float(o2.latitude));
         }
+
+
     }
+
+
+
+//    public ArrayList<LatLng> getIsochrone(LatLng origin, Double duration) {
+//
+//        ArrayList<LatLng> isochrone = new ArrayList<>();
+//        Double tolerance = 0.1;
+//        Integer numberOfAngles = 12;
+//
+//        /*Make a radius list, one element for each angle,
+//          whose elements will update until the isochrone is found */
+//
+//        Double [] rad1 = new Double [numberOfAngles];
+//        for (int i = 0; i< numberOfAngles; i++){
+//           rad1[i] = duration/12;
+//        }
+//
+//        Double [] phi1 = new Double [numberOfAngles];
+//        for (int i = 0; i< numberOfAngles; i++){
+//            phi1[i] = i*(360/Double.valueOf(numberOfAngles));
+//        }
+//
+//        Double [] data0 = new Double [numberOfAngles];
+//        for (int i = 0; i< numberOfAngles; i++){
+//            data0[i] = 0.0;
+//        }
+//
+//        Double [] rad0 = new Double [numberOfAngles];
+//        for (int i = 0; i< numberOfAngles; i++){
+//            rad0 [i] = 0.0;
+//        }
+//
+//        Double [] rmin= new Double [numberOfAngles];
+//        for (int i = 0; i< numberOfAngles; i++){
+//            rmin[i] = 0.0;
+//        }
+//
+//        Double [] rmax = new Double [numberOfAngles];
+//        for (int i = 0; i< numberOfAngles; i++){
+//            rmax[i] = 1.25*duration;
+//        }
+//
+//
+//        while (sum(rad0, rad1)!=0){
+//
+//            Double [] rad2 = new Double [numberOfAngles];
+//            for (int i = 0; i< numberOfAngles; i++){
+//                rad2 [i] = 0.0;
+//            }
+//
+//            for (int i = 0; i< numberOfAngles; i++){
+//                isochrone.add(selectDestination(origin, phi1[i], rad1[i]));
+//
+//                try{
+//                    TimeUnit.SECONDS.sleep(1);
+//                }catch (InterruptedException ie){
+//                    ie.printStackTrace();
+//                }
+//
+//            }
+//
+//            GenericUrl url = buildMatrixDistanceUrl(origin, isochrone);
+//            data = new GoogleApisRequesterTask().execute(url);
+//            for (int i = 0; i< numberOfAngles; i++) {
+//                if ((data[1][i] < (duration - tolerance)) & (data0[i] != data[0][i])){
+//                    rad2[i] = (rmax[i] + rad1[i]) / 2;
+//                    rmin[i] = rad1[i];
+//                }else{
+//                    if ((data[1][i] > (duration + tolerance)) &(data0[i] != data[0][i])) {
+//                        rad2[i] = (rmin[i] + rad1[i]) / 2;
+//                        rmax[i] = rad1[i];
+//                    }else{
+//                        rad2[i] = rad1[i];
+//                        data0[i] = data[0][i];
+//                    }
+//                }
+//
+//            }
+//
+//            rad0 = rad1;
+//            rad1 = rad2;
+//
+//        }
+//        for (int i = 0; i< numberOfAngles; i++) {
+//            isochrone.add(i, data[0][i]);
+//        }
+//
+//        return getConvexHull(isochrone);
+//    }
+
+    public Double sum(Double[] rad0, Double[] rad1){
+        Double sum = 0.0;
+        for (int i =0; i < rad0.length; i++){
+            sum += rad0[i] - rad1[i];
+        }
+        return sum;
+    }
+
+    public Double radians(Double degrees){
+        return degrees*Math.PI/180;
+    }
+
+    public Double degrees(Double radians){
+        return radians*180/Math.PI;
+    }
+
+    public GenericUrl buildMatrixDistanceUrl(LatLng origin, LatLng[] destinations){
+        GenericUrl matrixDistanceUrl = new GenericUrl("https://maps.googleapis.com/maps/api/distancematrix/json");
+        matrixDistanceUrl.put("origins", String.valueOf(origin.latitude) + "," + String.valueOf(origin.longitude));
+        String destination = "";
+        for(LatLng dest : destinations){
+            if (destination != ""){
+                destination = destination + "|" + String.valueOf(dest.latitude) + "," + String.valueOf(dest.longitude);
+            }else {
+                destination = String.valueOf(dest.latitude) + "," + String.valueOf(dest.longitude);
+            }
+
+        }
+        matrixDistanceUrl.put("destinations", destination);
+        matrixDistanceUrl.put("key","AIzaSyDZWHoI__d9kG7QinJKdPk9mIQf0bo_FbU");
+
+        return  matrixDistanceUrl;
+    }
+
+    public HashMap googleMatrixDistanceApiRequester(LatLng origin, LatLng[] destinations){
+
+        GenericUrl url = buildMatrixDistanceUrl(origin, destinations);
+        try {
+            HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory(new HttpRequestInitializer() {
+                @Override
+                public void initialize(HttpRequest request) {
+                    request.setParser(new JsonObjectParser(JSON_FACTORY));
+                }
+            });
+
+
+
+            HttpRequest request = requestFactory.buildGetRequest(url);
+            HttpResponse httpResponse = request.execute();
+            Log.d(TAG, "TESTE2");
+
+            return parseMatrixDistanceJson(httpResponse.parseAsString(), destinations);
+
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return null;
+    }
+
+    public HashMap parseMatrixDistanceJson(String response, LatLng[] destinations){
+
+        HashMap<LatLng, Double> durations = new HashMap<>(); // in minutes
+        HashMap<LatLng, Double> distances = new HashMap<>(); // in kilometers
+
+        try{
+            JSONObject result = new JSONObject(response);
+           // Log.d(TAG, result.toString());
+            if (result.get("status").toString().equals("OK")){
+                Log.d(TAG, result.get("status").toString());
+                JSONArray destination_addresses = result.getJSONArray("destination_addresses");
+                Log.d(TAG, destination_addresses.toString());
+                JSONArray rows = result.getJSONArray("rows");
+                JSONArray elements = rows.getJSONObject(0).getJSONArray("elements");
+                for(int i=0; i< elements.length(); i++){
+                    JSONObject element = elements.getJSONObject(i);
+                    if (element.get("status").toString().equals("OK")){
+                       // String address = destination_addresses.get(i).toString();
+                        LatLng coordinate = destinations[i];
+
+                        JSONObject distance = element.getJSONObject("distance");
+                        Double distanceValue = distance.getDouble("value")/1000.0;
+                        Log.d(TAG, distance.toString());
+
+                        JSONObject duration = element.getJSONObject("duration");
+                        Double durationValue = duration.getDouble("value")/60.0;
+                        Log.d(TAG, duration.toString());
+
+                        if (coordinate != null){
+                            distances.put(coordinate, distanceValue);
+                            durations.put(coordinate, durationValue);
+                        }
+
+                        Log.d(TAG, distances.toString());
+                        Log.d(TAG, durations.toString());
+                    }
+                }
+            }
+
+        }catch (JSONException je){
+            je.printStackTrace();
+        }
+
+
+        return durations;
+
+    }
+
+    public LatLng geocodeAddress(String address){
+
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        List<Address> coordinates;
+
+
+        try{
+            coordinates = geocoder.getFromLocationName(address, 1);
+
+            return new LatLng( coordinates.get(0).getLatitude(), coordinates.get(0).getLongitude());
+        }catch (IOException io){
+            io.printStackTrace();
+        }catch (IndexOutOfBoundsException iob){
+            iob.printStackTrace();
+        }
+
+        return null;
+
+    }
+
+    public LatLng selectDestination(LatLng origin, Double angle, Double radius){
+
+        Double r = 3963.1676; // Radius of the Earth in miles
+        Double bearing = radians(angle);
+        Double lat1 = radians(origin.latitude);
+        Double lng1 = radians(origin.longitude);
+        Double lat2 = Math.asin(Math.sin(lat1)* Math.cos(radius/r) + Math.cos(lat1)*Math.sin(radius/r)*Math.cos(bearing));
+        Double lng2 = lng1 + Math.atan2(Math.sin(bearing) * Math.sin(radius / r) * Math.cos(lat1), Math.cos(radius/r) - Math.sin(lat1) * Math.sin(lat2));
+        lat2 = degrees(lat2);
+        lng2 = degrees(lng2);
+
+        return new LatLng(lat2, lng2);
+    }
+
+
+    private class GetIsochroneTask extends AsyncTask<Double, Integer, ArrayList<LatLng>> {
+        // Double : origin.latitude, origin.longitude, duration
+        protected ArrayList<LatLng> doInBackground(Double... args) {
+
+            LatLng origin = new LatLng(args[0], args[1]);
+            Double duration = args[2];
+            Integer numberOfAngles = 12;
+            LatLng[] isochrone = new LatLng[numberOfAngles];
+            Double tolerance = 0.5;
+
+            HashMap<LatLng, Double> data = new HashMap();
+            int MAX_LOOPS = 10;
+
+            /*Make a radius list, one element for each angle,
+          whose elements will update until the isochrone is found */
+
+            Double [] rad1 = new Double [numberOfAngles];
+            for (int i = 0; i< numberOfAngles; i++){
+                rad1[i] = duration/12;
+            }
+
+            Double [] phi1 = new Double [numberOfAngles];
+            for (int i = 0; i< numberOfAngles; i++){
+                phi1[i] = i*(360/Double.valueOf(numberOfAngles));
+            }
+
+            LatLng [] data0 = new LatLng [numberOfAngles];
+            for (int i = 0; i< numberOfAngles; i++){
+                data0[i] = new LatLng(0.0,0.0);
+            }
+
+            Double [] rad0 = new Double [numberOfAngles];
+            for (int i = 0; i< numberOfAngles; i++){
+                rad0 [i] = 0.0;
+            }
+
+            Double [] rmin= new Double [numberOfAngles];
+            for (int i = 0; i< numberOfAngles; i++){
+                rmin[i] = 0.0;
+            }
+
+            Double [] rmax = new Double [numberOfAngles];
+            for (int i = 0; i< numberOfAngles; i++){
+                rmax[i] = 1.25*duration;
+            }
+
+            int loops = 0;
+            while (sum(rad0, rad1)!=0 && loops < MAX_LOOPS){
+
+                Double [] rad2 = new Double [numberOfAngles];
+                for (int i = 0; i< numberOfAngles; i++){
+                    rad2 [i] = 0.0;
+                }
+
+                for (int i = 0; i< numberOfAngles; i++){
+                    isochrone[i] = selectDestination(origin, phi1[i], rad1[i]);
+
+                    try{
+                        TimeUnit.SECONDS.sleep(1);
+                    }catch (InterruptedException ie){
+                        ie.printStackTrace();
+                    }
+
+                }
+
+                data = googleMatrixDistanceApiRequester(origin, isochrone);
+
+                int i = 0;
+                for (HashMap.Entry<LatLng, Double> entry : data.entrySet()) {
+                    LatLng curAddress = entry.getKey();
+                    Double curDuration = entry.getValue();
+
+                    if ((curDuration < (duration - tolerance)) & (data0[i] != curAddress)){
+                        rad2[i] = (rmax[i] + rad1[i]) / 2;
+                        rmin[i] = rad1[i];
+                    }else{
+                        if ((curDuration > (duration + tolerance)) &(data0[i] != curAddress)) {
+                            rad2[i] = (rmin[i] + rad1[i]) / 2;
+                            rmax[i] = rad1[i];
+                        }else{
+                            rad2[i] = rad1[i];
+
+                        }
+                    }
+                    data0[i] = curAddress;
+                    i = i + 1;
+                }
+
+                for (int k = 0; k< numberOfAngles; k++){
+                    rad0 [k] = rad1[k];
+                    rad1[k] = rad2[k];
+                }
+
+                loops += 1;
+
+            }
+
+            int j = 0;
+            for (LatLng key: data.keySet()){
+                isochrone[j] = key;
+                j++;
+
+            }
+
+            return getConvexHull(new ArrayList<>(Arrays.asList(isochrone)));
+
+        }
+
+        protected void onProgressUpdate(Integer... progress) {
+
+        }
+
+        protected void onPostExecute(ArrayList<LatLng> isochronePoints) {
+
+            drawRegion(isochronePoints);
+        }
+    }
+
+//    private class GoogleApisRequesterTask extends AsyncTask<GenericUrl, Integer, String> {
+//        protected String doInBackground(GenericUrl... urls) {
+//            try {
+//                HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory(new HttpRequestInitializer() {
+//                    @Override
+//                    public void initialize(HttpRequest request) {
+//                        request.setParser(new JsonObjectParser(JSON_FACTORY));
+//                    }
+//                });
+//
+//
+//
+//                HttpRequest request = requestFactory.buildGetRequest(urls[0]);
+//                HttpResponse httpResponse = request.execute();
+//                Log.d(TAG, "TESTE2");
+////                DirectionsResult directionsResult = httpResponse.parseAs(DirectionsResult.class);
+////                String encodedPoints = directionsResult.routes.get(0).overviewPolyLine.points;
+////                Log.d(TAG, encodedPoints);
+//                //HashMap response = httpResponse.parseAs(HashMap.class);
+//                parseMatrixDistanceJson(httpResponse.parseAsString());
+//               // Log.d(TAG, response.get("rows").toString());
+//                Log.d(TAG, "TESTE3");
+//
+//
+//            } catch (Exception ex) {
+//                ex.printStackTrace();
+//            }
+//            return null;
+//        }
+//
+//        protected void onProgressUpdate(Integer... progress) {
+//
+//        }
+//
+//        protected void onPostExecute(String result) {
+//
+//
+//        }
+//    }
+
+
 }
+
+
