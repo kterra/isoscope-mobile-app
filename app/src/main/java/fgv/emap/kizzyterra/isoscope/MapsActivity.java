@@ -20,7 +20,6 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.http.GenericUrl;
@@ -38,16 +37,19 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
-
 
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, MapDrawerCallback, ConvexHullAlgorithm, OnMapLongClickListener, OnMarkerClickListener {
@@ -58,7 +60,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private String TAG = "Maps";
     //private FirebaseManager fireManager;
     //private PolygonOptions rectOptions;
-    private Polygon region;
+    //private Polygon region;
     //private ArrayList<LatLng> regionPoints;
     private Marker lastMarkerClicked;
     static final HttpTransport HTTP_TRANSPORT = AndroidHttp.newCompatibleTransport();
@@ -269,94 +271,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
-
-//    public ArrayList<LatLng> getIsochrone(LatLng origin, Double duration) {
-//
-//        ArrayList<LatLng> isochrone = new ArrayList<>();
-//        Double tolerance = 0.1;
-//        Integer numberOfAngles = 12;
-//
-//        /*Make a radius list, one element for each angle,
-//          whose elements will update until the isochrone is found */
-//
-//        Double [] rad1 = new Double [numberOfAngles];
-//        for (int i = 0; i< numberOfAngles; i++){
-//           rad1[i] = duration/12;
-//        }
-//
-//        Double [] phi1 = new Double [numberOfAngles];
-//        for (int i = 0; i< numberOfAngles; i++){
-//            phi1[i] = i*(360/Double.valueOf(numberOfAngles));
-//        }
-//
-//        Double [] data0 = new Double [numberOfAngles];
-//        for (int i = 0; i< numberOfAngles; i++){
-//            data0[i] = 0.0;
-//        }
-//
-//        Double [] rad0 = new Double [numberOfAngles];
-//        for (int i = 0; i< numberOfAngles; i++){
-//            rad0 [i] = 0.0;
-//        }
-//
-//        Double [] rmin= new Double [numberOfAngles];
-//        for (int i = 0; i< numberOfAngles; i++){
-//            rmin[i] = 0.0;
-//        }
-//
-//        Double [] rmax = new Double [numberOfAngles];
-//        for (int i = 0; i< numberOfAngles; i++){
-//            rmax[i] = 1.25*duration;
-//        }
-//
-//
-//        while (sum(rad0, rad1)!=0){
-//
-//            Double [] rad2 = new Double [numberOfAngles];
-//            for (int i = 0; i< numberOfAngles; i++){
-//                rad2 [i] = 0.0;
-//            }
-//
-//            for (int i = 0; i< numberOfAngles; i++){
-//                isochrone.add(selectDestination(origin, phi1[i], rad1[i]));
-//
-//                try{
-//                    TimeUnit.SECONDS.sleep(1);
-//                }catch (InterruptedException ie){
-//                    ie.printStackTrace();
-//                }
-//
-//            }
-//
-//            GenericUrl url = buildMatrixDistanceUrl(origin, isochrone);
-//            data = new GoogleApisRequesterTask().execute(url);
-//            for (int i = 0; i< numberOfAngles; i++) {
-//                if ((data[1][i] < (duration - tolerance)) & (data0[i] != data[0][i])){
-//                    rad2[i] = (rmax[i] + rad1[i]) / 2;
-//                    rmin[i] = rad1[i];
-//                }else{
-//                    if ((data[1][i] > (duration + tolerance)) &(data0[i] != data[0][i])) {
-//                        rad2[i] = (rmin[i] + rad1[i]) / 2;
-//                        rmax[i] = rad1[i];
-//                    }else{
-//                        rad2[i] = rad1[i];
-//                        data0[i] = data[0][i];
-//                    }
-//                }
-//
-//            }
-//
-//            rad0 = rad1;
-//            rad1 = rad2;
-//
-//        }
-//        for (int i = 0; i< numberOfAngles; i++) {
-//            isochrone.add(i, data[0][i]);
-//        }
-//
-//        return getConvexHull(isochrone);
-//    }
-
     public Double sum(Double[] rad0, Double[] rad1){
         Double sum = 0.0;
         for (int i =0; i < rad0.length; i++){
@@ -365,12 +279,50 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return sum;
     }
 
-    public Double radians(Double degrees){
-        return degrees*Math.PI/180;
+
+    public Double getBearing (LatLng origin, LatLng destination){
+
+        /**Calculate the bearing from origin to destination **/
+
+
+        Double bearing = Math.atan2(Math.sin((destination.longitude - origin.longitude) * Math.PI / 180) * Math.cos(destination.latitude * Math.PI / 180),
+                Math.cos(origin.latitude * Math.PI / 180) * Math.sin(destination.latitude * Math.PI / 180) -
+                        Math.sin(origin.latitude * Math.PI / 180) * Math.cos(destination.latitude * Math.PI / 180) * Math.cos((destination.longitude - origin.longitude) * Math.PI / 180));
+        bearing = bearing * 180 / Math.PI;
+        bearing = (bearing + 360) % 360;
+        return bearing;
     }
 
-    public Double degrees(Double radians){
-        return radians*180/Math.PI;
+    public ArrayList<LatLng> sortPoints(LatLng origin, LatLng[] isochrone){
+
+      /**  Put the isochrone points in a proper order **/
+
+
+        ArrayList<Double> bearings = new ArrayList<>();
+        ArrayList<LatLng> sortedPoints = new ArrayList<>();
+        for(LatLng point : isochrone){
+            bearings.add(getBearing(origin, point));
+        }
+
+        Log.d(TAG, bearings.toString());
+
+        HashMap <Double, LatLng> points = new HashMap<>(bearings.size());
+        if (bearings.size() == isochrone.length) {
+            for (int i = 0; i <bearings.size(); ++i) {
+                points.put(bearings.get(i), isochrone[i]);
+            }
+        }
+
+        Log.d(TAG, points.toString());
+
+        Map<Double, LatLng> treeMap = new TreeMap<>(points);
+        for (Object v : treeMap.values()){
+            LatLng value = (LatLng) v;
+            sortedPoints.add(value);
+        }
+
+        Log.d(TAG, sortedPoints.toString());
+        return sortedPoints;
     }
 
     public GenericUrl buildMatrixDistanceUrl(LatLng origin, LatLng[] destinations){
@@ -434,8 +386,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 for(int i=0; i< elements.length(); i++){
                     JSONObject element = elements.getJSONObject(i);
                     if (element.get("status").toString().equals("OK")){
-                       // String address = destination_addresses.get(i).toString();
-                        LatLng coordinate = destinations[i];
+                        String address = destination_addresses.get(i).toString();
+                        LatLng coordinate = geocodeAddress(address);
 
                         JSONObject distance = element.getJSONObject("distance");
                         Double distanceValue = distance.getDouble("value")/1000.0;
@@ -484,19 +436,88 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return null;
 
     }
+    public Double haversine (LatLng origin, LatLng destination){
+        Double lat1 = Math.toRadians (origin.latitude);
+        Double lng1 = Math.toRadians  (origin.longitude);
+        Double lat2 = Math.toRadians  (destination.latitude);
+        Double lng2 = Math.toRadians  (destination.longitude);
 
+        Double dlng = lng2 - lng1;
+        Double dlat = lat2 - lat1;
+
+        Double a = Math.sin(dlat / 2)*Math.sin(dlat / 2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dlng / 2) * Math.sin(dlng / 2);
+        Double c = 2 * Math.asin(Math.sqrt(a));
+        Double r = 3959.0;
+
+        return  c*r;
+    }
+
+
+    public ArrayList<LatLng> createCoordinates(LatLng origin, Double radius_km, LatLng southwest, LatLng northeast, Double circ_cutoff_miles){
+        /* Fill 2D space with circles */
+
+        ArrayList<LatLng> coords = new ArrayList<>();
+        ArrayList<LatLng> finalCoords = new ArrayList<>();
+        Double earth_radius_km = 6371.0;
+        Double lat_start = Math.toRadians(southwest.latitude);
+        Double lng_start = Math.toRadians(southwest.longitude);
+        Double lat = lat_start;
+        Double lng = lng_start;
+        Double parallel_radius;
+        Integer lat_level = 5;
+
+        Log.d(TAG, southwest.toString());
+        Log.d(TAG, northeast.toString());
+        while(true){
+            Log.d(TAG,"while");
+            if((Math.toDegrees(lat) <= northeast.latitude ) & Math.toDegrees(lng) <= northeast.longitude){
+                LatLng coord = new LatLng(lat,lng);
+                coords.add(coord);
+                Log.d(TAG, coord.toString());
+            }
+            parallel_radius = earth_radius_km*Math.cos(lat);
+            if( Math.toDegrees(lat) > northeast.latitude){
+                break;
+            }else{
+                if(Math.toDegrees(lng) > northeast.longitude){
+                    lat_level += 1;
+                    lat += (radius_km / earth_radius_km) + (radius_km / earth_radius_km) * Math.sin(Math.toRadians(30.0));
+                    if (lat_level % 2 != 0)
+                        lng = lng_start;
+                    else
+                        lng = lng_start + (radius_km / parallel_radius) * Math.cos(Math.toRadians(30.0));
+                }else{
+                    lng += 2 * (radius_km / parallel_radius) * Math.cos(Math.toRadians(30.0));
+                }
+            }
+        }
+
+        if (circ_cutoff_miles > 0){
+            for (LatLng coord : coords){
+                if (haversine(origin, coord) <= circ_cutoff_miles)
+                    finalCoords.add(coord);
+            }
+        }
+
+        //Log.d(TAG, finalCoords.toString());
+        return finalCoords;
+
+    }
     public LatLng selectDestination(LatLng origin, Double angle, Double radius){
 
-        Double r = 3963.1676; // Radius of the Earth in miles
-        Double bearing = radians(angle);
-        Double lat1 = radians(origin.latitude);
-        Double lng1 = radians(origin.longitude);
+        Double r = 3959.0; // Radius of the Earth in miles
+        Double bearing = Math.toRadians(angle);
+        Double lat1 = Math.toRadians(origin.latitude);
+        Double lng1 = Math.toRadians(origin.longitude);
         Double lat2 = Math.asin(Math.sin(lat1)* Math.cos(radius/r) + Math.cos(lat1)*Math.sin(radius/r)*Math.cos(bearing));
         Double lng2 = lng1 + Math.atan2(Math.sin(bearing) * Math.sin(radius / r) * Math.cos(lat1), Math.cos(radius/r) - Math.sin(lat1) * Math.sin(lat2));
-        lat2 = degrees(lat2);
-        lng2 = degrees(lng2);
+        lat2 = Math.toDegrees(lat2);
+        lng2 = Math.toDegrees(lng2);
 
-        return new LatLng(lat2, lng2);
+
+        LatLng coord = new LatLng(lat2, lng2);
+        Log.d(TAG, coord.toString());
+        return coord;
     }
 
 
@@ -506,12 +527,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             LatLng origin = new LatLng(args[0], args[1]);
             Double duration = args[2];
+            Double radius_km = 0.1;
+            Double max_distance_miles = duration * (40/60);
             Integer numberOfAngles = 12;
             LatLng[] isochrone = new LatLng[numberOfAngles];
             Double tolerance = 0.5;
+            Integer GROUP_N = 50;
 
             HashMap<LatLng, Double> data = new HashMap();
-            int MAX_LOOPS = 10;
+            int MAX_LOOPS = 1;
+
 
             /*Make a radius list, one element for each angle,
           whose elements will update until the isochrone is found */
@@ -603,8 +628,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 j++;
 
             }
+          // Log.d(TAG, new ArrayList<>(Arrays.asList(isochrone)).toString());
+            return sortPoints(origin, isochrone);
+            //return getConvexHull(new ArrayList<>(Arrays.asList(isochrone)));
 
-            return getConvexHull(new ArrayList<>(Arrays.asList(isochrone)));
 
         }
 
@@ -614,7 +641,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         protected void onPostExecute(ArrayList<LatLng> isochronePoints) {
 
-            drawRegion(isochronePoints);
+           drawRegion(isochronePoints);
+
         }
     }
 
