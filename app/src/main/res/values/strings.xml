@@ -2,4 +2,8 @@
     <string name="app_name">Isoscope</string>
     <string name="title_activity_maps">Map</string>
     <string name="title_activity_test">TestActivity</string>
+    <string name="filter_button">Filtrar</string>
+    <string name="filter_hours">h</string>
+    <string name="filter_minutes">min</string>
+    <string name="filter_seconds">segs</string>
 </resources>

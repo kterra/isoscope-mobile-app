@@ -5,12 +5,24 @@ import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.Places;
+import com.google.android.gms.location.places.ui.PlaceAutocomplete;
+import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
+import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
@@ -31,32 +43,33 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.jackson.JacksonFactory;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, MapDrawerCallback, ConvexHullAlgorithm, OnMapLongClickListener, OnMarkerClickListener {
+public class MapsActivity extends AppCompatActivity implements OnConnectionFailedListener, OnMapReadyCallback, MapDrawerCallback, ConvexHullAlgorithm, OnMapLongClickListener, OnMarkerClickListener {
 
     private GoogleMap mMap;
     private static final float MAP_MIN_ZOOM = 10.5f;
     private static final float MAP_MAX_ZOOM = 14.0f;
+    private static final double TEN_MINUTES = 10.0;
+    private static final double FIVE_MINUTES = 5.0;
+    private static final int ISOCHRONE_DURATION_REQUEST_CODE = 1;
+    private static final int PLACE_AUTOCOMPLETE_REQUEST_CODE = 2;
+    private Double isochroneDuration = 0.0;
     private String TAG = "Maps";
     //private FirebaseManager fireManager;
     //private PolygonOptions rectOptions;
@@ -66,10 +79,45 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     static final HttpTransport HTTP_TRANSPORT = AndroidHttp.newCompatibleTransport();
     static final JsonFactory JSON_FACTORY = new JacksonFactory();
 
+    private GoogleApiClient mGoogleApiClient;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
+//        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_main);
+//       // toolbar.setNavigationIcon(R.drawable.ic_arrow_back_black_24dp);
+//        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                onBackPressed();
+//            }
+//        });
+
+        mGoogleApiClient = new GoogleApiClient
+                .Builder(this)
+                .addApi(Places.GEO_DATA_API)
+                .addApi(Places.PLACE_DETECTION_API)
+                .enableAutoManage(this, this)
+                .build();
+
+        PlaceAutocompleteFragment autocompleteFragment = (PlaceAutocompleteFragment)
+                getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
+
+        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(Place place) {
+                // TODO: Get info about the selected place.
+                Log.i(TAG, "Place: " + place.getName());
+            }
+
+            @Override
+            public void onError(Status status) {
+                // TODO: Handle the error.
+                Log.i(TAG, "An error occurred: " + status);
+            }
+        });
 
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -77,7 +125,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onClick(View view) {
 
-                startActivity(new Intent(MapsActivity.this, FilterActivity.class));
+                startActivityForResult(new Intent(MapsActivity.this, FilterActivity.class), ISOCHRONE_DURATION_REQUEST_CODE);
 //                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
 //                        .setAction("Action", null).show();
             }
@@ -91,6 +139,69 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // Check which request we're responding to
+        if (requestCode == ISOCHRONE_DURATION_REQUEST_CODE) {
+            // Make sure the request was successful
+            if (resultCode == RESULT_OK) {
+               isochroneDuration = data.getDoubleExtra("duration", 1);
+                Log.d(TAG, isochroneDuration.toString());
+
+            }
+        }
+
+        if (requestCode == PLACE_AUTOCOMPLETE_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                Place place = PlaceAutocomplete.getPlace(this, data);
+                Log.i(TAG, "Place: " + place.getName());
+            } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
+                Status status = PlaceAutocomplete.getStatus(this, data);
+                // TODO: Handle the error.
+                Log.i(TAG, status.getStatusMessage());
+
+            } else if (resultCode == RESULT_CANCELED) {
+                // The user canceled the operation.
+            }
+        }
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the options menu from XML
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_search, menu);
+        // Get the SearchView and set the searchable configuration
+//        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+//        // Assumes current activity is the searchable activity
+//        MenuItem searchItem = menu.findItem(R.id.menu_search_view);
+//        // Get the SearchView and set the searchable configuration
+//        SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
+//        // Assumes current activity is the searchable activity
+//        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+//        searchView.setIconifiedByDefault(false); // Do not iconify the widget; expand it by default
+//        searchView.setSubmitButtonEnabled(true);
+//
+//        SearchView.OnQueryTextListener queryTextListener = new SearchView.OnQueryTextListener() {
+//            public boolean onQueryTextChange(String newText) {
+//
+//                return true;
+//            }
+//            public boolean onQueryTextSubmit(String query) {
+//                return false;
+//            }
+//        };
+//        searchView.setOnQueryTextListener(queryTextListener);
+
+
+        //super.onCreateOptionsMenu(menu, inflater);
+
+        return true;
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
 
     /**
      * Manipulates the map once available.
@@ -149,7 +260,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         lastMarkerClicked = marker;
         mMap.addMarker(new MarkerOptions().position(lastMarkerClicked.getPosition()).snippet(lastMarkerClicked.getSnippet()));
         LatLng origin = marker.getPosition();
-        new GetIsochroneTask().execute(origin.latitude, origin.longitude, 10.0);
+
+        if(isochroneDuration == 0.0){
+            isochroneDuration = TEN_MINUTES;
+        }
+        new GetIsochroneTask().execute(origin.latitude, origin.longitude, isochroneDuration);
 
 //        String startPoint = String.valueOf(marker.getSnippet());
 //        Integer timeLimit = 3000;
@@ -436,73 +551,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return null;
 
     }
-    public Double haversine (LatLng origin, LatLng destination){
-        Double lat1 = Math.toRadians (origin.latitude);
-        Double lng1 = Math.toRadians  (origin.longitude);
-        Double lat2 = Math.toRadians  (destination.latitude);
-        Double lng2 = Math.toRadians  (destination.longitude);
-
-        Double dlng = lng2 - lng1;
-        Double dlat = lat2 - lat1;
-
-        Double a = Math.sin(dlat / 2)*Math.sin(dlat / 2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dlng / 2) * Math.sin(dlng / 2);
-        Double c = 2 * Math.asin(Math.sqrt(a));
-        Double r = 3959.0;
-
-        return  c*r;
-    }
 
 
-    public ArrayList<LatLng> createCoordinates(LatLng origin, Double radius_km, LatLng southwest, LatLng northeast, Double circ_cutoff_miles){
-        /* Fill 2D space with circles */
 
-        ArrayList<LatLng> coords = new ArrayList<>();
-        ArrayList<LatLng> finalCoords = new ArrayList<>();
-        Double earth_radius_km = 6371.0;
-        Double lat_start = Math.toRadians(southwest.latitude);
-        Double lng_start = Math.toRadians(southwest.longitude);
-        Double lat = lat_start;
-        Double lng = lng_start;
-        Double parallel_radius;
-        Integer lat_level = 5;
 
-        Log.d(TAG, southwest.toString());
-        Log.d(TAG, northeast.toString());
-        while(true){
-            Log.d(TAG,"while");
-            if((Math.toDegrees(lat) <= northeast.latitude ) & Math.toDegrees(lng) <= northeast.longitude){
-                LatLng coord = new LatLng(lat,lng);
-                coords.add(coord);
-                Log.d(TAG, coord.toString());
-            }
-            parallel_radius = earth_radius_km*Math.cos(lat);
-            if( Math.toDegrees(lat) > northeast.latitude){
-                break;
-            }else{
-                if(Math.toDegrees(lng) > northeast.longitude){
-                    lat_level += 1;
-                    lat += (radius_km / earth_radius_km) + (radius_km / earth_radius_km) * Math.sin(Math.toRadians(30.0));
-                    if (lat_level % 2 != 0)
-                        lng = lng_start;
-                    else
-                        lng = lng_start + (radius_km / parallel_radius) * Math.cos(Math.toRadians(30.0));
-                }else{
-                    lng += 2 * (radius_km / parallel_radius) * Math.cos(Math.toRadians(30.0));
-                }
-            }
-        }
-
-        if (circ_cutoff_miles > 0){
-            for (LatLng coord : coords){
-                if (haversine(origin, coord) <= circ_cutoff_miles)
-                    finalCoords.add(coord);
-            }
-        }
-
-        //Log.d(TAG, finalCoords.toString());
-        return finalCoords;
-
-    }
     public LatLng selectDestination(LatLng origin, Double angle, Double radius){
 
         Double r = 3959.0; // Radius of the Earth in miles
@@ -624,11 +676,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             int j = 0;
             for (LatLng key: data.keySet()){
-                isochrone[j] = key;
+                if (data.get(key) <= duration + tolerance){
+                    Log.d(TAG, data.get(key).toString());
+                    isochrone[j] = key;
+                }
+
                 j++;
 
             }
-          // Log.d(TAG, new ArrayList<>(Arrays.asList(isochrone)).toString());
+            Log.d(TAG, new ArrayList<>(Arrays.asList(isochrone)).toString());
             return sortPoints(origin, isochrone);
             //return getConvexHull(new ArrayList<>(Arrays.asList(isochrone)));
 
