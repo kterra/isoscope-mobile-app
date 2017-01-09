@@ -12,9 +12,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
 import com.google.android.gms.common.api.Status;
@@ -23,6 +26,7 @@ import com.google.android.gms.location.places.Places;
 import com.google.android.gms.location.places.ui.PlaceAutocomplete;
 import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
 import com.google.android.gms.location.places.ui.PlaceSelectionListener;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
@@ -76,6 +80,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
     //private Polygon region;
     //private ArrayList<LatLng> regionPoints;
     private Marker lastMarkerClicked;
+    private LatLng lastPositionSelected;
     static final HttpTransport HTTP_TRANSPORT = AndroidHttp.newCompatibleTransport();
     static final JsonFactory JSON_FACTORY = new JacksonFactory();
 
@@ -153,8 +158,18 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
 
         if (requestCode == PLACE_AUTOCOMPLETE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
+
+
                 Place place = PlaceAutocomplete.getPlace(this, data);
-                Log.i(TAG, "Place: " + place.getName());
+                lastPositionSelected = place.getLatLng();
+                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(lastPositionSelected, MAP_MIN_ZOOM);
+                mMap.moveCamera(cameraUpdate);
+
+                Log.i(TAG, "Place: " + lastPositionSelected.toString());
+                if(isochroneDuration == 0.0){
+                    isochroneDuration = TEN_MINUTES;
+                }
+                new GetIsochroneTask().execute(lastPositionSelected.latitude, lastPositionSelected.longitude, isochroneDuration);
             } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
                 Status status = PlaceAutocomplete.getStatus(this, data);
                 // TODO: Handle the error.
@@ -196,6 +211,31 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
         //super.onCreateOptionsMenu(menu, inflater);
 
         return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_search:
+                try {
+                    Intent intent =
+                            new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_OVERLAY)
+                                    .build(this);
+                    startActivityForResult(intent, PLACE_AUTOCOMPLETE_REQUEST_CODE);
+                } catch (GooglePlayServicesRepairableException e) {
+                    // TODO: Handle the error.
+                } catch (GooglePlayServicesNotAvailableException e) {
+                    // TODO: Handle the error.
+                }
+                return true;
+
+
+            default:
+                // If we got here, the user's action was not recognized.
+                // Invoke the superclass to handle it.
+                return super.onOptionsItemSelected(item);
+
+        }
     }
 
     @Override
@@ -258,7 +298,8 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
         mMap.clear();
 
         lastMarkerClicked = marker;
-        mMap.addMarker(new MarkerOptions().position(lastMarkerClicked.getPosition()).snippet(lastMarkerClicked.getSnippet()));
+        lastPositionSelected = lastMarkerClicked.getPosition();
+        mMap.addMarker(new MarkerOptions().position(lastPositionSelected).snippet(lastMarkerClicked.getSnippet()));
         LatLng origin = marker.getPosition();
 
         if(isochroneDuration == 0.0){
@@ -294,7 +335,8 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
         mMap.clear();
 
 
-        mMap.addMarker(new MarkerOptions().position(lastMarkerClicked.getPosition()).snippet(lastMarkerClicked.getSnippet()));
+        mMap.addMarker(new MarkerOptions().position(lastPositionSelected));
+
 
         PolygonOptions rectOptions = new PolygonOptions()
                 .strokeWidth(2.0f)
