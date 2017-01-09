@@ -33,6 +33,8 @@ import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -47,6 +49,8 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.jackson.JacksonFactory;
+import com.google.maps.android.SphericalUtil;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -298,7 +302,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
         mMap.clear();
 
         lastMarkerClicked = marker;
-        lastPositionSelected = lastMarkerClicked.getPosition();
+
         mMap.addMarker(new MarkerOptions().position(lastPositionSelected).snippet(lastMarkerClicked.getSnippet()));
         LatLng origin = marker.getPosition();
 
@@ -320,6 +324,8 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
         mMap.clear();
         Log.d(TAG,"LONGCLICK");
         lastMarkerClicked =  drawMarker("100", point);
+        lastPositionSelected = lastMarkerClicked.getPosition();
+        testCircle();
     }
 
     @Override
@@ -332,7 +338,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
     @Override
     public void drawRegion(ArrayList<LatLng> regionPoints) {
 
-        mMap.clear();
+        //mMap.clear();
 
 
         mMap.addMarker(new MarkerOptions().position(lastPositionSelected));
@@ -342,14 +348,36 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
                 .strokeWidth(2.0f)
                 .fillColor(Color.argb(150, 102, 140, 255))
                 .strokeColor(Color.argb(150, 102, 140, 255));
-        ArrayList<LatLng> convexHullPoints =  getConvexHull(regionPoints);
-        for (LatLng p : convexHullPoints){
+        //ArrayList<LatLng> convexHullPoints =  getConvexHull(regionPoints);
+        for (LatLng p : regionPoints){
             rectOptions.add(p);
         }
         mMap.addPolygon(rectOptions);
 
     }
 
+
+    public void testCircle() {
+
+        mMap.clear();
+
+
+        mMap.addMarker(new MarkerOptions().position(lastPositionSelected));
+        //Circle circ = mMap.addCircle(new CircleOptions().center(lastPositionSelected).radius(2000.0));
+        mMap.addMarker(new MarkerOptions().position(SphericalUtil.computeOffset(lastPositionSelected,1500.0,270.0)));
+        mMap.addMarker(new MarkerOptions().position(SphericalUtil.computeOffset(lastPositionSelected,1500.0,225.0)));
+        mMap.addMarker(new MarkerOptions().position(SphericalUtil.computeOffset(lastPositionSelected,1500.0,180.0)));
+        mMap.addMarker(new MarkerOptions().position(SphericalUtil.computeOffset(lastPositionSelected,1500.0,135.0)));
+        mMap.addMarker(new MarkerOptions().position(SphericalUtil.computeOffset(lastPositionSelected,1500.0,90.0)));
+        mMap.addMarker(new MarkerOptions().position(SphericalUtil.computeOffset(lastPositionSelected,1500.0,45.0)));
+        mMap.addMarker(new MarkerOptions().position(SphericalUtil.computeOffset(lastPositionSelected,1500.0,0.0)));
+
+
+        new GetIsodistanceTask().execute(lastPositionSelected.latitude, lastPositionSelected.longitude, 5000.0);
+
+
+
+    }
 
 
     @Override
@@ -623,13 +651,12 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
             Double duration = args[2];
             Double radius_km = 0.1;
             Double max_distance_miles = duration * (40/60);
-            Integer numberOfAngles = 12;
+            Integer numberOfAngles = 15;
             LatLng[] isochrone = new LatLng[numberOfAngles];
             Double tolerance = 0.5;
-            Integer GROUP_N = 50;
 
             HashMap<LatLng, Double> data = new HashMap();
-            int MAX_LOOPS = 1;
+            int MAX_LOOPS = 5;
 
 
             /*Make a radius list, one element for each angle,
@@ -637,7 +664,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
 
             Double [] rad1 = new Double [numberOfAngles];
             for (int i = 0; i< numberOfAngles; i++){
-                rad1[i] = duration/12;
+                rad1[i] = duration/numberOfAngles;
             }
 
             Double [] phi1 = new Double [numberOfAngles];
@@ -740,6 +767,51 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
         protected void onPostExecute(ArrayList<LatLng> isochronePoints) {
 
            drawRegion(isochronePoints);
+
+        }
+    }
+
+    private class GetIsodistanceTask extends AsyncTask<Double, Integer, ArrayList<LatLng>> {
+        // Double : origin.latitude, origin.longitude, duration
+        protected ArrayList<LatLng> doInBackground(Double... args) {
+
+            LatLng origin = new LatLng(args[0], args[1]);
+            Double distance = args[2];
+            Integer numberOfAngles = 7;
+            LatLng[] isodistance = new LatLng[numberOfAngles];
+            Double tolerance = 0.5;
+
+
+            HashMap<LatLng, Double> data = new HashMap();
+            int MAX_LOOPS = 1;
+
+
+            isodistance[0] =  SphericalUtil.computeOffset(lastPositionSelected,1500.0,270.0);
+            isodistance[1] =  SphericalUtil.computeOffset(lastPositionSelected,1500.0,225.0);
+            isodistance[2] =  SphericalUtil.computeOffset(lastPositionSelected,1500.0,180.0);
+            isodistance[3] =  SphericalUtil.computeOffset(lastPositionSelected,1500.0,135.0);
+            isodistance[4] =  SphericalUtil.computeOffset(lastPositionSelected,1500.0,90.0);
+            isodistance[5] =  SphericalUtil.computeOffset(lastPositionSelected,1500.0,45.0);
+            isodistance[6] =  SphericalUtil.computeOffset(lastPositionSelected,1500.0,0.0);
+
+                data = googleMatrixDistanceApiRequester(origin, isodistance);
+
+
+
+            Log.d(TAG, new ArrayList<>(Arrays.asList(isodistance)).toString());
+            return sortPoints(origin, isodistance);
+            //return getConvexHull(new ArrayList<>(Arrays.asList(isochrone)));
+
+
+        }
+
+        protected void onProgressUpdate(Integer... progress) {
+
+        }
+
+        protected void onPostExecute(ArrayList<LatLng> isodistancePoints) {
+
+            drawRegion(isodistancePoints);
 
         }
     }
