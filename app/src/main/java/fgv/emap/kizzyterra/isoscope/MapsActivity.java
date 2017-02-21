@@ -363,14 +363,6 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
 
 
         mMap.addMarker(new MarkerOptions().position(lastPositionSelected));
-        //Circle circ = mMap.addCircle(new CircleOptions().center(lastPositionSelected).radius(2000.0));
-        mMap.addMarker(new MarkerOptions().position(SphericalUtil.computeOffset(lastPositionSelected,1500.0,270.0)));
-        mMap.addMarker(new MarkerOptions().position(SphericalUtil.computeOffset(lastPositionSelected,1500.0,225.0)));
-        mMap.addMarker(new MarkerOptions().position(SphericalUtil.computeOffset(lastPositionSelected,1500.0,180.0)));
-        mMap.addMarker(new MarkerOptions().position(SphericalUtil.computeOffset(lastPositionSelected,1500.0,135.0)));
-        mMap.addMarker(new MarkerOptions().position(SphericalUtil.computeOffset(lastPositionSelected,1500.0,90.0)));
-        mMap.addMarker(new MarkerOptions().position(SphericalUtil.computeOffset(lastPositionSelected,1500.0,45.0)));
-        mMap.addMarker(new MarkerOptions().position(SphericalUtil.computeOffset(lastPositionSelected,1500.0,0.0)));
 
 
         new GetIsodistanceTask().execute(lastPositionSelected.latitude, lastPositionSelected.longitude, 5000.0);
@@ -777,7 +769,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
 
             LatLng origin = new LatLng(args[0], args[1]);
             Double distance = args[2];
-            Integer numberOfAngles = 7;
+            Integer numberOfAngles = 12;
             LatLng[] isodistance = new LatLng[numberOfAngles];
             Double tolerance = 0.5;
 
@@ -785,18 +777,15 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
             HashMap<LatLng, Double> data = new HashMap();
             int MAX_LOOPS = 1;
 
-
-            isodistance[0] =  SphericalUtil.computeOffset(lastPositionSelected,1500.0,270.0);
-            isodistance[1] =  SphericalUtil.computeOffset(lastPositionSelected,1500.0,225.0);
-            isodistance[2] =  SphericalUtil.computeOffset(lastPositionSelected,1500.0,180.0);
-            isodistance[3] =  SphericalUtil.computeOffset(lastPositionSelected,1500.0,135.0);
-            isodistance[4] =  SphericalUtil.computeOffset(lastPositionSelected,1500.0,90.0);
-            isodistance[5] =  SphericalUtil.computeOffset(lastPositionSelected,1500.0,45.0);
-            isodistance[6] =  SphericalUtil.computeOffset(lastPositionSelected,1500.0,0.0);
-
-                data = googleMatrixDistanceApiRequester(origin, isodistance);
+            for (int j=0; j< numberOfAngles; j++){
+                double ratio = 360.0/numberOfAngles;
+                isodistance[j]= SphericalUtil.computeOffset(lastPositionSelected,distance,j*ratio);
+            }
 
 
+            data = googleMatrixDistanceApiRequester(origin, isodistance);
+
+            //call function that improves isodistance.
 
             Log.d(TAG, new ArrayList<>(Arrays.asList(isodistance)).toString());
             return sortPoints(origin, isodistance);
