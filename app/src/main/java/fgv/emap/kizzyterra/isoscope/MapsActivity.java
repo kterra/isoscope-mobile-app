@@ -49,6 +49,7 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.jackson.JacksonFactory;
+import com.google.api.client.repackaged.com.google.common.base.Strings;
 import com.google.maps.android.SphericalUtil;
 
 import org.json.JSONArray;
@@ -325,7 +326,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
         Log.d(TAG,"LONGCLICK");
         lastMarkerClicked =  drawMarker("100", point);
         lastPositionSelected = lastMarkerClicked.getPosition();
-        testCircle();
+      //  testCircle();
     }
 
     @Override
@@ -481,7 +482,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
             bearings.add(getBearing(origin, point));
         }
 
-        Log.d(TAG, bearings.toString());
+//        Log.d(TAG, bearings.toString());
 
         HashMap <Double, LatLng> points = new HashMap<>(bearings.size());
         if (bearings.size() == isochrone.length) {
@@ -490,7 +491,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
             }
         }
 
-        Log.d(TAG, points.toString());
+//        Log.d(TAG, points.toString());
 
         Map<Double, LatLng> treeMap = new TreeMap<>(points);
         for (Object v : treeMap.values()){
@@ -498,7 +499,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
             sortedPoints.add(value);
         }
 
-        Log.d(TAG, sortedPoints.toString());
+//        Log.d(TAG, sortedPoints.toString());
         return sortedPoints;
     }
 
@@ -520,7 +521,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
         return  matrixDistanceUrl;
     }
 
-    public HashMap googleMatrixDistanceApiRequester(LatLng origin, LatLng[] destinations){
+    public ArrayList googleMatrixDistanceApiRequester(LatLng origin, LatLng[] destinations){
 
         GenericUrl url = buildMatrixDistanceUrl(origin, destinations);
         try {
@@ -546,7 +547,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
         return null;
     }
 
-    public HashMap parseMatrixDistanceJson(String response, LatLng[] destinations){
+    public ArrayList parseMatrixDistanceJson(String response, LatLng[] destinations){
 
         HashMap<LatLng, Double> durations = new HashMap<>(); // in minutes
         HashMap<LatLng, Double> distances = new HashMap<>(); // in kilometers
@@ -567,7 +568,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
                         LatLng coordinate = geocodeAddress(address);
 
                         JSONObject distance = element.getJSONObject("distance");
-                        Double distanceValue = distance.getDouble("value")/1000.0;
+                        Double distanceValue = distance.getDouble("value");
                         Log.d(TAG, distance.toString());
 
                         JSONObject duration = element.getJSONObject("duration");
@@ -589,8 +590,10 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
             je.printStackTrace();
         }
 
-
-        return durations;
+        ArrayList data = new ArrayList();
+        data.add(durations);
+        data.add(distances);
+        return data;
 
     }
 
@@ -619,7 +622,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
 
     public LatLng selectDestination(LatLng origin, Double angle, Double radius){
 
-        Double r = 3959.0; // Radius of the Earth in miles
+        Double r = 6378100.0; // Radius of the Earth in meters
         Double bearing = Math.toRadians(angle);
         Double lat1 = Math.toRadians(origin.latitude);
         Double lng1 = Math.toRadians(origin.longitude);
@@ -630,7 +633,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
 
 
         LatLng coord = new LatLng(lat2, lng2);
-        Log.d(TAG, coord.toString());
+//        Log.d(TAG, coord.toString());
         return coord;
     }
 
@@ -641,14 +644,16 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
 
             LatLng origin = new LatLng(args[0], args[1]);
             Double duration = args[2];
+            Double estimated_max_radius = duration*84;
+            Log.d("tempo", duration.toString());
             Double radius_km = 0.1;
-            Double max_distance_miles = duration * (40/60);
-            Integer numberOfAngles = 15;
+            Integer numberOfAngles = 20;
             LatLng[] isochrone = new LatLng[numberOfAngles];
             Double tolerance = 0.5;
 
-            HashMap<LatLng, Double> data = new HashMap();
-            int MAX_LOOPS = 5;
+            HashMap<LatLng, Double> data_durations = new HashMap();
+            HashMap<LatLng, Double> data_distances = new HashMap();
+            int MAX_LOOPS = 30;
 
 
             /*Make a radius list, one element for each angle,
@@ -656,7 +661,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
 
             Double [] rad1 = new Double [numberOfAngles];
             for (int i = 0; i< numberOfAngles; i++){
-                rad1[i] = duration/numberOfAngles;
+                rad1[i] = estimated_max_radius; // avarega walking speed: 84 m/min;
             }
 
             Double [] phi1 = new Double [numberOfAngles];
@@ -681,12 +686,12 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
 
             Double [] rmax = new Double [numberOfAngles];
             for (int i = 0; i< numberOfAngles; i++){
-                rmax[i] = 1.25*duration;
+                rmax[i] = 1.25*estimated_max_radius;
             }
 
             int loops = 0;
             while (sum(rad0, rad1)!=0 && loops < MAX_LOOPS){
-
+                Log.d(TAG, String.valueOf(loops));
                 Double [] rad2 = new Double [numberOfAngles];
                 for (int i = 0; i< numberOfAngles; i++){
                     rad2 [i] = 0.0;
@@ -703,18 +708,21 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
 
                 }
 
-                data = googleMatrixDistanceApiRequester(origin, isochrone);
+                data_durations = (HashMap)googleMatrixDistanceApiRequester(origin, isochrone).get(0);
+                data_distances = (HashMap)googleMatrixDistanceApiRequester(origin, isochrone).get(1);
 
                 int i = 0;
-                for (HashMap.Entry<LatLng, Double> entry : data.entrySet()) {
+                for (HashMap.Entry<LatLng, Double> entry : data_durations.entrySet()) {
                     LatLng curAddress = entry.getKey();
                     Double curDuration = entry.getValue();
-
+//                    rad1[i] = data_distances.get(curAddress); 
                     if ((curDuration < (duration - tolerance)) & (data0[i] != curAddress)){
+                        rmax[i] = 1.25*rad1[i];
                         rad2[i] = (rmax[i] + rad1[i]) / 2;
                         rmin[i] = rad1[i];
+
                     }else{
-                        if ((curDuration > (duration + tolerance)) &(data0[i] != curAddress)) {
+                        if ((curDuration > (duration + tolerance)) & (data0[i] != curAddress)) {
                             rad2[i] = (rmin[i] + rad1[i]) / 2;
                             rmax[i] = rad1[i];
                         }else{
@@ -731,21 +739,22 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
                     rad1[k] = rad2[k];
                 }
 
-                loops += 1;
+                loops = loops + 1;
+                Log.d(TAG, String.valueOf(sum(rad0, rad1)));
 
             }
 
             int j = 0;
-            for (LatLng key: data.keySet()){
-                if (data.get(key) <= duration + tolerance){
-                    Log.d(TAG, data.get(key).toString());
+            for (LatLng key: data_durations.keySet()){
+                if (data_durations.get(key) <= duration + tolerance){
+//                    Log.d(TAG, data.get(key).toString());
                     isochrone[j] = key;
                 }
 
                 j++;
 
             }
-            Log.d(TAG, new ArrayList<>(Arrays.asList(isochrone)).toString());
+//            Log.d(TAG, new ArrayList<>(Arrays.asList(isochrone)).toString());
             return sortPoints(origin, isochrone);
             //return getConvexHull(new ArrayList<>(Arrays.asList(isochrone)));
 
@@ -783,11 +792,11 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
             }
 
 
-            data = googleMatrixDistanceApiRequester(origin, isodistance);
+            data = (HashMap<LatLng, Double>) googleMatrixDistanceApiRequester(origin, isodistance).get(0);
 
             //call function that improves isodistance.
 
-            Log.d(TAG, new ArrayList<>(Arrays.asList(isodistance)).toString());
+//            Log.d(TAG, new ArrayList<>(Arrays.asList(isodistance)).toString());
             return sortPoints(origin, isodistance);
             //return getConvexHull(new ArrayList<>(Arrays.asList(isochrone)));
 
