@@ -644,7 +644,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
 
             LatLng origin = new LatLng(args[0], args[1]);
             Double duration = args[2];
-            Double estimated_max_radius = duration*84;
+            Double estimated_max_radius = duration*1333; // *84 for walking
             Log.d("tempo", duration.toString());
             Double radius_km = 0.1;
             Integer numberOfAngles = 20;
@@ -690,7 +690,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
             }
 
             int loops = 0;
-            while (sum(rad0, rad1)!=0 && loops < MAX_LOOPS){
+            while (loops < MAX_LOOPS){
                 Log.d(TAG, String.valueOf(loops));
                 Double [] rad2 = new Double [numberOfAngles];
                 for (int i = 0; i< numberOfAngles; i++){
@@ -707,22 +707,22 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
                     }
 
                 }
-
-                data_durations = (HashMap)googleMatrixDistanceApiRequester(origin, isochrone).get(0);
-                data_distances = (HashMap)googleMatrixDistanceApiRequester(origin, isochrone).get(1);
+                ArrayList data = googleMatrixDistanceApiRequester(origin, isochrone);
+                data_durations = (HashMap)data.get(0);
+                data_distances = (HashMap)data.get(1);
 
                 int i = 0;
                 for (HashMap.Entry<LatLng, Double> entry : data_durations.entrySet()) {
                     LatLng curAddress = entry.getKey();
                     Double curDuration = entry.getValue();
 //                    rad1[i] = data_distances.get(curAddress); 
-                    if ((curDuration < (duration - tolerance)) & (data0[i] != curAddress)){
-                        rmax[i] = 1.25*rad1[i];
+                    if ((curDuration < (duration - tolerance))){
                         rad2[i] = (rmax[i] + rad1[i]) / 2;
+                        rmax[i] = 1.25*rmax[i];
                         rmin[i] = rad1[i];
 
                     }else{
-                        if ((curDuration > (duration + tolerance)) & (data0[i] != curAddress)) {
+                        if ((curDuration > (duration + tolerance))) {
                             rad2[i] = (rmin[i] + rad1[i]) / 2;
                             rmax[i] = rad1[i];
                         }else{
