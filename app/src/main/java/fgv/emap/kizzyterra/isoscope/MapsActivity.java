@@ -1,5 +1,6 @@
 package fgv.emap.kizzyterra.isoscope;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.location.Address;
@@ -86,8 +87,8 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
     //private ArrayList<LatLng> regionPoints;
     private Marker lastMarkerClicked;
     private LatLng lastPositionSelected;
-    static final HttpTransport HTTP_TRANSPORT = AndroidHttp.newCompatibleTransport();
-    static final JsonFactory JSON_FACTORY = new JacksonFactory();
+
+    private CircleGrid grid;
 
     private GoogleApiClient mGoogleApiClient;
 
@@ -308,9 +309,11 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
         LatLng origin = marker.getPosition();
 
         if(isochroneDuration == 0.0){
-            isochroneDuration = TEN_MINUTES;
+            isochroneDuration = FIVE_MINUTES;
         }
-        new GetIsochroneTask().execute(origin.latitude, origin.longitude, isochroneDuration);
+
+        grid = new CircleGrid(origin, isochroneDuration);
+        new GetTimeDataForGrid().execute();
 
 //        String startPoint = String.valueOf(marker.getSnippet());
 //        Integer timeLimit = 3000;
@@ -354,21 +357,6 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
             rectOptions.add(p);
         }
         mMap.addPolygon(rectOptions);
-
-    }
-
-
-    public void testCircle() {
-
-        mMap.clear();
-
-
-        mMap.addMarker(new MarkerOptions().position(lastPositionSelected));
-
-
-        new GetIsodistanceTask().execute(lastPositionSelected.latitude, lastPositionSelected.longitude, 5000.0);
-
-
 
     }
 
@@ -449,28 +437,6 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
     }
 
 
-    public Double sum(Double[] rad0, Double[] rad1){
-        Double sum = 0.0;
-        for (int i =0; i < rad0.length; i++){
-            sum += rad0[i] - rad1[i];
-        }
-        return sum;
-    }
-
-
-    public Double getBearing (LatLng origin, LatLng destination){
-
-        /**Calculate the bearing from origin to destination **/
-
-
-        Double bearing = Math.atan2(Math.sin((destination.longitude - origin.longitude) * Math.PI / 180) * Math.cos(destination.latitude * Math.PI / 180),
-                Math.cos(origin.latitude * Math.PI / 180) * Math.sin(destination.latitude * Math.PI / 180) -
-                        Math.sin(origin.latitude * Math.PI / 180) * Math.cos(destination.latitude * Math.PI / 180) * Math.cos((destination.longitude - origin.longitude) * Math.PI / 180));
-        bearing = bearing * 180 / Math.PI;
-        bearing = (bearing + 360) % 360;
-        return bearing;
-    }
-
     public ArrayList<LatLng> sortPoints(LatLng origin, LatLng[] isochrone){
 
       /**  Put the isochrone points in a proper order **/
@@ -479,7 +445,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
         ArrayList<Double> bearings = new ArrayList<>();
         ArrayList<LatLng> sortedPoints = new ArrayList<>();
         for(LatLng point : isochrone){
-            bearings.add(getBearing(origin, point));
+            bearings.add(Utils.getBearing(origin, point));
         }
 
 //        Log.d(TAG, bearings.toString());
@@ -503,140 +469,6 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
         return sortedPoints;
     }
 
-    public GenericUrl buildMatrixDistanceUrl(LatLng origin, LatLng[] destinations){
-        GenericUrl matrixDistanceUrl = new GenericUrl("https://maps.googleapis.com/maps/api/distancematrix/json");
-        matrixDistanceUrl.put("origins", String.valueOf(origin.latitude) + "," + String.valueOf(origin.longitude));
-        String destination = "";
-        for(LatLng dest : destinations){
-            if (destination != ""){
-                destination = destination + "|" + String.valueOf(dest.latitude) + "," + String.valueOf(dest.longitude);
-            }else {
-                destination = String.valueOf(dest.latitude) + "," + String.valueOf(dest.longitude);
-            }
-
-        }
-        matrixDistanceUrl.put("destinations", destination);
-        matrixDistanceUrl.put("key","AIzaSyDZWHoI__d9kG7QinJKdPk9mIQf0bo_FbU");
-
-        return  matrixDistanceUrl;
-    }
-
-    public ArrayList googleMatrixDistanceApiRequester(LatLng origin, LatLng[] destinations){
-
-        GenericUrl url = buildMatrixDistanceUrl(origin, destinations);
-        try {
-            HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory(new HttpRequestInitializer() {
-                @Override
-                public void initialize(HttpRequest request) {
-                    request.setParser(new JsonObjectParser(JSON_FACTORY));
-                }
-            });
-
-
-
-            HttpRequest request = requestFactory.buildGetRequest(url);
-            HttpResponse httpResponse = request.execute();
-            Log.d(TAG, "TESTE2");
-
-            return parseMatrixDistanceJson(httpResponse.parseAsString(), destinations);
-
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        return null;
-    }
-
-    public ArrayList parseMatrixDistanceJson(String response, LatLng[] destinations){
-
-        HashMap<LatLng, Double> durations = new HashMap<>(); // in minutes
-        HashMap<LatLng, Double> distances = new HashMap<>(); // in kilometers
-
-        try{
-            JSONObject result = new JSONObject(response);
-           // Log.d(TAG, result.toString());
-            if (result.get("status").toString().equals("OK")){
-                Log.d(TAG, result.get("status").toString());
-                JSONArray destination_addresses = result.getJSONArray("destination_addresses");
-                Log.d(TAG, destination_addresses.toString());
-                JSONArray rows = result.getJSONArray("rows");
-                JSONArray elements = rows.getJSONObject(0).getJSONArray("elements");
-                for(int i=0; i< elements.length(); i++){
-                    JSONObject element = elements.getJSONObject(i);
-                    if (element.get("status").toString().equals("OK")){
-                        String address = destination_addresses.get(i).toString();
-                        LatLng coordinate = geocodeAddress(address);
-
-                        JSONObject distance = element.getJSONObject("distance");
-                        Double distanceValue = distance.getDouble("value");
-                        Log.d(TAG, distance.toString());
-
-                        JSONObject duration = element.getJSONObject("duration");
-                        Double durationValue = duration.getDouble("value")/60.0;
-                        Log.d(TAG, duration.toString());
-
-                        if (coordinate != null){
-                            distances.put(coordinate, distanceValue);
-                            durations.put(coordinate, durationValue);
-                        }
-
-                        Log.d(TAG, distances.toString());
-                        Log.d(TAG, durations.toString());
-                    }
-                }
-            }
-
-        }catch (JSONException je){
-            je.printStackTrace();
-        }
-
-        ArrayList data = new ArrayList();
-        data.add(durations);
-        data.add(distances);
-        return data;
-
-    }
-
-    public LatLng geocodeAddress(String address){
-
-        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-        List<Address> coordinates;
-
-
-        try{
-            coordinates = geocoder.getFromLocationName(address, 1);
-
-            return new LatLng( coordinates.get(0).getLatitude(), coordinates.get(0).getLongitude());
-        }catch (IOException io){
-            io.printStackTrace();
-        }catch (IndexOutOfBoundsException iob){
-            iob.printStackTrace();
-        }
-
-        return null;
-
-    }
-
-
-
-
-    public LatLng selectDestination(LatLng origin, Double angle, Double radius){
-
-        Double r = 6378100.0; // Radius of the Earth in meters
-        Double bearing = Math.toRadians(angle);
-        Double lat1 = Math.toRadians(origin.latitude);
-        Double lng1 = Math.toRadians(origin.longitude);
-        Double lat2 = Math.asin(Math.sin(lat1)* Math.cos(radius/r) + Math.cos(lat1)*Math.sin(radius/r)*Math.cos(bearing));
-        Double lng2 = lng1 + Math.atan2(Math.sin(bearing) * Math.sin(radius / r) * Math.cos(lat1), Math.cos(radius/r) - Math.sin(lat1) * Math.sin(lat2));
-        lat2 = Math.toDegrees(lat2);
-        lng2 = Math.toDegrees(lng2);
-
-
-        LatLng coord = new LatLng(lat2, lng2);
-//        Log.d(TAG, coord.toString());
-        return coord;
-    }
-
 
     private class GetIsochroneTask extends AsyncTask<Double, Integer, ArrayList<LatLng>> {
         // Double : origin.latitude, origin.longitude, duration
@@ -647,13 +479,13 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
             Double estimated_max_radius = duration*1333; // *84 for walking
             Log.d("tempo", duration.toString());
             Double radius_km = 0.1;
-            Integer numberOfAngles = 20;
+            Integer numberOfAngles = 40;
             LatLng[] isochrone = new LatLng[numberOfAngles];
             Double tolerance = 0.5;
 
             HashMap<LatLng, Double> data_durations = new HashMap();
             HashMap<LatLng, Double> data_distances = new HashMap();
-            int MAX_LOOPS = 30;
+            int MAX_LOOPS = 5;
 
 
             /*Make a radius list, one element for each angle,
@@ -698,7 +530,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
                 }
 
                 for (int i = 0; i< numberOfAngles; i++){
-                    isochrone[i] = selectDestination(origin, phi1[i], rad1[i]);
+                    isochrone[i] = Utils.haversine(origin, phi1[i], rad1[i]);
 
                     try{
                         TimeUnit.SECONDS.sleep(1);
@@ -707,7 +539,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
                     }
 
                 }
-                ArrayList data = googleMatrixDistanceApiRequester(origin, isochrone);
+                ArrayList data = GoogleApiRequestsManager.googleMatrixDistanceApiRequester(origin, isochrone, MapsActivity.this);
                 data_durations = (HashMap)data.get(0);
                 data_distances = (HashMap)data.get(1);
 
@@ -740,7 +572,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
                 }
 
                 loops = loops + 1;
-                Log.d(TAG, String.valueOf(sum(rad0, rad1)));
+                Log.d(TAG, String.valueOf(Utils.sum(rad0, rad1)));
 
             }
 
@@ -772,34 +604,38 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
         }
     }
 
-    private class GetIsodistanceTask extends AsyncTask<Double, Integer, ArrayList<LatLng>> {
+    private class GetTimeDataForGrid extends AsyncTask<Void, Integer, ArrayList<ArrayList<Double>>> {
         // Double : origin.latitude, origin.longitude, duration
-        protected ArrayList<LatLng> doInBackground(Double... args) {
-
-            LatLng origin = new LatLng(args[0], args[1]);
-            Double distance = args[2];
-            Integer numberOfAngles = 12;
-            LatLng[] isodistance = new LatLng[numberOfAngles];
-            Double tolerance = 0.5;
+        protected ArrayList<ArrayList<Double>> doInBackground(Void... voidss) {
 
 
-            HashMap<LatLng, Double> data = new HashMap();
-            int MAX_LOOPS = 1;
+            LatLng origin = grid.gridCenter;
+            Double duration = grid.gridBaseTime;
+            int nRadii = grid.numberOfRadii;
+            int nAngles = grid.numberOfAngles;
 
-            for (int j=0; j< numberOfAngles; j++){
-                double ratio = 360.0/numberOfAngles;
-                isodistance[j]= SphericalUtil.computeOffset(lastPositionSelected,distance,j*ratio);
+            ArrayList<ArrayList<Double>> timeData = new ArrayList<>();
+
+            for (int radiusIndex = 0; radiusIndex < nRadii; radiusIndex++){
+                ArrayList<LatLng> row = grid.points.get(radiusIndex);
+                ArrayList<Double> times = new ArrayList<>();
+
+                for (int angleIndex=0; angleIndex < nAngles; angleIndex++){
+                    LatLng coordinate = row.get(angleIndex);
+                    times.add(angleIndex, GoogleApiRequestsManager.getDirections(origin, coordinate, MapsActivity.this));
+                    try {
+                        Thread.currentThread();
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+                timeData.add(radiusIndex, times);
+
             }
 
-
-            data = (HashMap<LatLng, Double>) googleMatrixDistanceApiRequester(origin, isodistance).get(0);
-
-            //call function that improves isodistance.
-
-//            Log.d(TAG, new ArrayList<>(Arrays.asList(isodistance)).toString());
-            return sortPoints(origin, isodistance);
-            //return getConvexHull(new ArrayList<>(Arrays.asList(isochrone)));
-
+          return timeData;
 
         }
 
@@ -807,52 +643,12 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
 
         }
 
-        protected void onPostExecute(ArrayList<LatLng> isodistancePoints) {
+        protected void onPostExecute(ArrayList<ArrayList<Double>> times) {
 
-            drawRegion(isodistancePoints);
+            grid.setTimeData(times);
 
         }
     }
-
-//    private class GoogleApisRequesterTask extends AsyncTask<GenericUrl, Integer, String> {
-//        protected String doInBackground(GenericUrl... urls) {
-//            try {
-//                HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory(new HttpRequestInitializer() {
-//                    @Override
-//                    public void initialize(HttpRequest request) {
-//                        request.setParser(new JsonObjectParser(JSON_FACTORY));
-//                    }
-//                });
-//
-//
-//
-//                HttpRequest request = requestFactory.buildGetRequest(urls[0]);
-//                HttpResponse httpResponse = request.execute();
-//                Log.d(TAG, "TESTE2");
-////                DirectionsResult directionsResult = httpResponse.parseAs(DirectionsResult.class);
-////                String encodedPoints = directionsResult.routes.get(0).overviewPolyLine.points;
-////                Log.d(TAG, encodedPoints);
-//                //HashMap response = httpResponse.parseAs(HashMap.class);
-//                parseMatrixDistanceJson(httpResponse.parseAsString());
-//               // Log.d(TAG, response.get("rows").toString());
-//                Log.d(TAG, "TESTE3");
-//
-//
-//            } catch (Exception ex) {
-//                ex.printStackTrace();
-//            }
-//            return null;
-//        }
-//
-//        protected void onProgressUpdate(Integer... progress) {
-//
-//        }
-//
-//        protected void onPostExecute(String result) {
-//
-//
-//        }
-//    }
 
 
 }
