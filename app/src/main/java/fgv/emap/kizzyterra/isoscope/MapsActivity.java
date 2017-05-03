@@ -40,6 +40,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolygonOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
@@ -360,6 +362,29 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
 
     }
 
+    @Override
+    public void drawIsochroneBySegment(HashMap<ArrayList<LatLng>, ArrayList<Tuple>> data){
+
+        try {
+            ArrayList<LatLng> isochrone = (ArrayList<LatLng>) data.keySet().toArray()[0];
+
+            ArrayList<Tuple> segments = data.get(isochrone);
+            for (Tuple tuple: segments){
+                PolylineOptions rectOptions = new PolylineOptions()
+                        .add(isochrone.get((int)tuple.x))
+                        .add(isochrone.get((int)tuple.y))
+                        .color(Color.RED);
+
+                // Get back the mutable Polyline
+                mMap.addPolyline(rectOptions);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
 
     @Override
     public ArrayList<LatLng> getConvexHull(ArrayList<LatLng> points) {
@@ -622,6 +647,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
 
                 for (int angleIndex=0; angleIndex < nAngles; angleIndex++){
                     LatLng coordinate = row.get(angleIndex);
+                    Log.d(TAG, "apirequester");
                     times.add(angleIndex, GoogleApiRequestsManager.getDirections(origin, coordinate, MapsActivity.this));
                     try {
                         Thread.currentThread();
@@ -646,6 +672,9 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
         protected void onPostExecute(ArrayList<ArrayList<Double>> times) {
 
             grid.setTimeData(times);
+            Log.d(TAG, times.toString());
+            drawIsochroneBySegment(grid.getIsochroneCell());
+
 
         }
     }
