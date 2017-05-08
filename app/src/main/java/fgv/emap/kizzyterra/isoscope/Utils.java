@@ -6,8 +6,11 @@ import android.location.Geocoder;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.StringTokenizer;
@@ -30,11 +33,36 @@ public class Utils {
 //
 //    }
 //
-//    public static void listToFile(ArrayList list, String filename){
-//
-//
-//    }
-//
+    public static void listToFile(ArrayList sampleList, String filename){
+        String commaSeparatedValues = "";
+
+        /** If the list is not null and the list size is not zero, do the processing**/
+        if (sampleList != null) {
+
+            /**Iterate through the list and append comma after each values**/
+            Iterator<String> iter = sampleList.iterator();
+            while (iter.hasNext()) {
+                commaSeparatedValues += iter.next() + ",";
+            }
+            /**Remove the last comma**/
+            if (commaSeparatedValues.endsWith(",")) {
+                commaSeparatedValues = commaSeparatedValues.substring(0,
+                        commaSeparatedValues.lastIndexOf(","));
+            }
+        }
+
+            try {
+                FileWriter fstream = new FileWriter(filename, false);
+                BufferedWriter out = new BufferedWriter(fstream);
+                out.write(commaSeparatedValues);
+                out.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+
+    }
+
 //    public static void matrixToFile(ArrayList matrix, String filename){
 //
 //    }

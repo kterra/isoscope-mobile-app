@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.AsyncTask;
+import android.support.annotation.IntegerRes;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.os.Bundle;
@@ -175,9 +176,13 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
 
                 Log.i(TAG, "Place: " + lastPositionSelected.toString());
                 if(isochroneDuration == 0.0){
-                    isochroneDuration = TEN_MINUTES;
+                    isochroneDuration = FIVE_MINUTES;
                 }
-                new GetIsochroneTask().execute(lastPositionSelected.latitude, lastPositionSelected.longitude, isochroneDuration);
+               // new GetIsochroneTask().execute(lastPositionSelected.latitude, lastPositionSelected.longitude, isochroneDuration);
+
+                grid = new CircleGrid(lastPositionSelected, isochroneDuration);
+                new GetTimeDataForGrid().execute();
+
             } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
                 Status status = PlaceAutocomplete.getStatus(this, data);
                 // TODO: Handle the error.
@@ -369,11 +374,15 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
             ArrayList<LatLng> isochrone = (ArrayList<LatLng>) data.keySet().toArray()[0];
 
             ArrayList<Tuple> segments = data.get(isochrone);
+
             for (Tuple tuple: segments){
+                Log.d(TAG, Integer.toString((int)tuple.x));
+                Log.d(TAG, Integer.toString((int)tuple.y));
                 PolylineOptions rectOptions = new PolylineOptions()
                         .add(isochrone.get((int)tuple.x))
                         .add(isochrone.get((int)tuple.y))
-                        .color(Color.RED);
+                        .color(Color.RED)
+                        .width(1);
 
                 // Get back the mutable Polyline
                 mMap.addPolyline(rectOptions);

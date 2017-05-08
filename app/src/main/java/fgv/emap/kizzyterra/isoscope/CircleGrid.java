@@ -1,10 +1,12 @@
 package fgv.emap.kizzyterra.isoscope;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.IndoorBuilding;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.StreetViewPanoramaCamera;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,7 +28,9 @@ public class CircleGrid implements Grid {
     ArrayList<Double> radii;
     ArrayList<Double> angles;
 
+
     public CircleGrid(LatLng point, double time){
+
 
         gridBaseTime = time;
         gridCenter = point;
@@ -74,6 +78,8 @@ public class CircleGrid implements Grid {
             }
            points.add(row);
         }
+
+        Log.d("GRID", "points" + points.toString());
         //matrix_to_file(self.grid, 'grid.csv')
 
     }
@@ -107,7 +113,7 @@ public class CircleGrid implements Grid {
         if (time < gridBaseTime + tolerance)
             return true;
         else
-         return false;
+            return false;
     }
 
     public LatLng evaluatePointCut(int radiusIndex1, int angleIndex1, Double time1,
@@ -128,9 +134,9 @@ public class CircleGrid implements Grid {
                     angle1 = 360.0;
                 if (angleIndex2 == 0)
                     angle2 = 360.0;
-                cutAngle = angle1 + (angle2 - angle1) * ratio;
-                cutRadius = radii.get(radiusIndex1);
             }
+            cutAngle = angle1 + (angle2 - angle1) * ratio;
+            cutRadius = radii.get(radiusIndex1);
 
         }else{
             if(angleIndex1 == angleIndex2){
@@ -159,7 +165,10 @@ public class CircleGrid implements Grid {
                 Double b = timeData.get(radiusIndex).get(nextAngleIndex);
                 Double c = timeData.get(radiusIndex + 1).get(nextAngleIndex);
                 Double d = timeData.get(radiusIndex + 1).get(angleIndex);
-
+                Log.d("GRID", "a: " + String.valueOf(a));
+                Log.d("GRID", "b: " + String.valueOf(b));
+                Log.d("GRID", "c: " + String.valueOf(c));
+                Log.d("GRID", "d: " + String.valueOf(d));
 
                 boolean a_inner = isInner(a);
                 boolean b_inner = isInner(b);
@@ -232,6 +241,14 @@ public class CircleGrid implements Grid {
 
                  // segments
                 int code = signsCode(signs);
+
+                Log.d("GRID","cell: a: (" + radiusIndex + ", " + angleIndex + ") b: (" + radiusIndex + ", " + nextAngleIndex +
+                        ") c: (" + String.valueOf(radiusIndex + 1) + ", " + nextAngleIndex
+                        + " d: (" + String.valueOf(radiusIndex + 1) + ", " + angleIndex + ")");
+                Log.d("GRID", String.valueOf(signs[0]) + ", " + String.valueOf(signs[1])
+                        + ", " +String.valueOf(signs[2]) + ", " + String.valueOf(signs[3]));
+                Log.d("GRID", String.valueOf(code));
+
 
                 if (code == 0 || code == 15){
                     continue;
