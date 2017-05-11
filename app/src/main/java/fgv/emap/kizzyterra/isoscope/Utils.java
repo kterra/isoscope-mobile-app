@@ -7,6 +7,7 @@ import android.location.Geocoder;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.BufferedWriter;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,17 +24,19 @@ public class Utils {
 
 
     public static double RADIUS_OF_EARTH = 3963.1676;  // Radius of the Earth in miles
+    //http://www.w3ii.com/pt/android/android_internal_storage.html
+    //https://pt.stackoverflow.com/questions/48196/salvamento-de-dados-em-android
 
-//    public static ArrayList listFromFile(String filename){
-//
-//
-//    }
-//
+    public static ArrayList listFromFile(String filename){
+
+
+    }
+
 //    public static ArrayList matrixFromFile(String filename){
 //
 //    }
 //
-    public static void listToFile(ArrayList sampleList, String filename){
+    public static void listToFile(ArrayList sampleList, String fileName, Context ctx){
         String commaSeparatedValues = "";
 
         /** If the list is not null and the list size is not zero, do the processing**/
@@ -52,10 +55,15 @@ public class Utils {
         }
 
             try {
-                FileWriter fstream = new FileWriter(filename, false);
-                BufferedWriter out = new BufferedWriter(fstream);
-                out.write(commaSeparatedValues);
-                out.close();
+
+                FileOutputStream outputStream = null;
+                try {
+                    outputStream = ctx.getApplicationContext().openFileOutput(fileName, Context.MODE_PRIVATE);
+                    outputStream.write(commaSeparatedValues.getBytes());
+                    outputStream.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
