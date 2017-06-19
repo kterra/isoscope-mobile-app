@@ -15,5 +15,6 @@ public interface MapDrawerCallback {
     Marker drawMarker(String index, LatLng point);
     void drawRegion(ArrayList<LatLng> region);
     void drawIsochroneBySegment(HashMap<ArrayList<LatLng>, ArrayList<Tuple>> data);
+    void drawGrid(ArrayList<ArrayList<LatLng>> grid);
 
 }

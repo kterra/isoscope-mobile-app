@@ -14,6 +14,7 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.jackson.JacksonFactory;
+import com.google.api.client.repackaged.com.google.common.base.Strings;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -41,11 +42,32 @@ public class GoogleApiRequestsManager {
     private static final String DISTANCE = "distance";
     private static final String DURATION = "duration";
 
+    private static final int BICYCLING = 1000;
+    private static final int DRIVING = 2000;
+    private static final int WALKING = 3000;
+    private static final int TRANSIT = 4000;
+    private static final String MODE_BICYCLING = "bicycling";
+    private static final String MODE_DRIVING = "driving";
+    private static final String MODE_WALKING = "walking";
+    private static final String MODE_TRANSIT = "transit";
 
-    public static Double getDirections(LatLng origin, LatLng dest, Context ctx){
 
-        String travelMode = "driving";
-        return googleDirectionsApiRequester(origin, dest, travelMode, ctx);
+    public static String mode(int travelMode){
+
+        switch (travelMode){
+            case BICYCLING: return MODE_BICYCLING;
+            case WALKING: return MODE_WALKING;
+            case TRANSIT: return MODE_TRANSIT;
+            default:
+                return MODE_DRIVING;
+
+        }
+    }
+
+    public static Double getDirections(LatLng origin, LatLng dest, int travelMode, Context ctx){
+
+        String mode = mode(travelMode);
+        return googleDirectionsApiRequester(origin, dest, mode, ctx);
 
     }
 
@@ -103,9 +125,9 @@ public class GoogleApiRequestsManager {
         return null;
     }
 
-    public static Double googleDirectionsApiRequester(LatLng origin, LatLng destination, String travelMode, Context ctx){
+    public static Double googleDirectionsApiRequester(LatLng origin, LatLng destination, String mode, Context ctx){
 
-        GenericUrl url = buildDirectionsUrl(origin, destination, travelMode);
+        GenericUrl url = buildDirectionsUrl(origin, destination, mode);
         try {
             HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory(new HttpRequestInitializer() {
                 @Override

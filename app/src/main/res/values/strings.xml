@@ -1,12 +1,41 @@
 <resources>
-    <string name="app_name">Isoscope</string>
+
+    <string name="app_name">Isoconstruction</string>
     <string name="title_activity_maps">Map</string>
     <string name="title_activity_test">TestActivity</string>
     <string name="filter_button">Filtrar</string>
     <string name="filter_hours">h</string>
     <string name="filter_minutes">min</string>
     <string name="filter_seconds">segs</string>
+    <string name="title_activity_main">Isoconstruction</string>
+    <string name="action_settings">Settings</string>
+    <string name="section_format">Hello World from section: %1$d</string>
 
+    <string name="mode">Selecionar Modal</string>
+    <string name="driving">Carro</string>
+    <string name="walking">A Pé</string>
+    <string name="transit">Transp. Público</string>
+    <string name="time">Selecionar Duração</string>
+
+    <string name="five_minutes">5 MIN</string>
+    <string name="ten_minutes">10 MIN</string>
+    <string name="fifteen_minutes">15 MIN</string>
+    <string name="twenty_minutes">20 MIN</string>
+    <string name="twenty_five_minutes">25 MIN</string>
+    <string name="thirty_minutes">30 MIN</string>
+    <string name="forty_five_minutes">45 MIN</string>
+    <string name="sixty_minutes">1 HORA</string>
+
+    <string name="address_reference">Selecionar ponto de referência</string>
+    <string name="addresses">Selecionar Endereços</string>
+    <string name="address_start">Selecionar ponto inicial</string>
+    <string name="address_end">Selecionar ponto final</string>
+    <string name="gotomap">Gerar Isócrona</string>
+
+    <string name="seconds">seg</string>
+    <string name="minutes">min</string>
+    <string name="hours">h</string>
+    <string name="or">ou</string>
 
 
 </resources>

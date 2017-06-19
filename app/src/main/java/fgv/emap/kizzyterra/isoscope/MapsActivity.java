@@ -35,11 +35,13 @@ import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -76,10 +78,15 @@ import java.util.concurrent.TimeUnit;
 public class MapsActivity extends AppCompatActivity implements OnConnectionFailedListener, OnMapReadyCallback, MapDrawerCallback, ConvexHullAlgorithm, OnMapLongClickListener, OnMarkerClickListener {
 
     private GoogleMap mMap;
-    private static final float MAP_MIN_ZOOM = 10.5f;
+    private static final float MAP_MIN_ZOOM = 12f;
     private static final float MAP_MAX_ZOOM = 14.0f;
     private static final double TEN_MINUTES = 10.0;
     private static final double FIVE_MINUTES = 5.0;
+    private static final int BICYCLING = 1000;
+    private static final int DRIVING = 2000;
+    private static final int WALKING = 3000;
+    private static final int TRANSIT = 4000;
+    private int MODE;
     private static final int ISOCHRONE_DURATION_REQUEST_CODE = 1;
     private static final int PLACE_AUTOCOMPLETE_REQUEST_CODE = 2;
     private Double isochroneDuration = 0.0;
@@ -109,6 +116,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
 //            }
 //        });
 
+        MODE = WALKING;
         mGoogleApiClient = new GoogleApiClient
                 .Builder(this)
                 .addApi(Places.GEO_DATA_API)
@@ -180,7 +188,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
                 }
                // new GetIsochroneTask().execute(lastPositionSelected.latitude, lastPositionSelected.longitude, isochroneDuration);
 
-                grid = new CircleGrid(lastPositionSelected, isochroneDuration);
+                grid = new CircleGrid(lastPositionSelected, isochroneDuration, MODE);
                 new GetTimeDataForGrid().execute();
 
             } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
@@ -276,8 +284,6 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(rio, MAP_MIN_ZOOM));
 
 
-
-
         //fireManager.removeAll();
         //fireManager.insertData(MapsActivity.this);
 
@@ -319,7 +325,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
             isochroneDuration = FIVE_MINUTES;
         }
 
-        grid = new CircleGrid(origin, isochroneDuration);
+        grid = new CircleGrid(origin, isochroneDuration, MODE);
         new GetTimeDataForGrid().execute();
 
 //        String startPoint = String.valueOf(marker.getSnippet());
@@ -374,7 +380,8 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
             ArrayList<LatLng> isochrone = (ArrayList<LatLng>) data.keySet().toArray()[0];
 
             ArrayList<Tuple> segments = data.get(isochrone);
-
+            //PolygonOptions plo = new PolygonOptions().strokeColor(Color.BLUE).fillColor(Color.BLUE).strokeWidth(2);
+            //plo.addAll(isochrone);
             for (Tuple tuple: segments){
                 Log.d(TAG, Integer.toString((int)tuple.x));
                 Log.d(TAG, Integer.toString((int)tuple.y));
@@ -382,11 +389,16 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
                         .add(isochrone.get((int)tuple.x))
                         .add(isochrone.get((int)tuple.y))
                         .color(Color.RED)
-                        .width(1);
+                        .width(2);
+
+               // plo.add(isochrone.get((int)tuple.x),isochrone.get((int)tuple.y));
 
                 // Get back the mutable Polyline
                 mMap.addPolyline(rectOptions);
+
+
             }
+            //mMap.addPolygon(plo);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -394,6 +406,27 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
 
     }
 
+    @Override
+    public void drawGrid(ArrayList<ArrayList<LatLng>> grid){
+
+        ArrayList<LatLng> inners = grid.get(0);
+        for (LatLng pos: inners){
+            mMap.addMarker(new MarkerOptions()
+                    .position(pos)
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+
+        }
+
+        ArrayList<LatLng> outers = grid.get(1);
+        for (LatLng pos: outers){
+            mMap.addMarker(new MarkerOptions()
+                    .position(pos)
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+
+        }
+
+
+    }
 
     @Override
     public ArrayList<LatLng> getConvexHull(ArrayList<LatLng> points) {
@@ -657,7 +690,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
                 for (int angleIndex=0; angleIndex < nAngles; angleIndex++){
                     LatLng coordinate = row.get(angleIndex);
                     Log.d(TAG, "apirequester");
-                    times.add(angleIndex, GoogleApiRequestsManager.getDirections(origin, coordinate, MapsActivity.this));
+                    times.add(angleIndex, GoogleApiRequestsManager.getDirections(origin, coordinate, MODE, MapsActivity.this));
                     try {
                         Thread.currentThread();
                         Thread.sleep(1000);
@@ -682,7 +715,9 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
 
             grid.setTimeData(times);
             Log.d(TAG, times.toString());
+           // drawGrid(grid.getPointsByTime());
             drawIsochroneBySegment(grid.getIsochroneCell());
+
 
 
         }

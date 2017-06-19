@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 public class CircleGrid implements Grid {
 
-    public static final int numberOfAngles = 24;
+    public static final int numberOfAngles = 30;
     public static final int numberOfRadii = 5;
     private ArrayList<ArrayList<Double>> timeData;
     public Double gridBaseTime;
@@ -28,8 +28,13 @@ public class CircleGrid implements Grid {
     ArrayList<Double> radii;
     ArrayList<Double> angles;
 
+    private static final int BICYCLING = 1000;
+    private static final int DRIVING = 2000;
+    private static final int WALKING = 3000;
+    private static final int TRANSIT = 4000;
 
-    public CircleGrid(LatLng point, double time){
+
+    public CircleGrid(LatLng point, double time, int mode){
 
 
         gridBaseTime = time;
@@ -43,19 +48,42 @@ public class CircleGrid implements Grid {
 //            angles = Utils.listFromFile("angles.csv");
 //            grid = Utils.matrixFromFile("grid.csv");
 //        }else{
-            buildGrid();
+            buildGrid(mode);
 //        }
 
 
     }
 
-    public void buildGrid(){
+    public void buildGrid(int mode){
 
         points = new ArrayList<>();
-        int delta_max = 2;
-        int delta_min = 3;
-        double max_radius = (gridBaseTime + delta_max)/12; //radius estimation based on speed of transit mode
-        double min_radius = (gridBaseTime - delta_min)/12;  //radius estimation based on speed of transit mode
+        int delta_max;
+        int delta_min;
+        int ratio = 12;
+
+        switch (mode){
+            case BICYCLING:
+                delta_min = 3;
+                delta_max = 6;
+                break;
+            case WALKING:
+                delta_min = 6;
+                delta_max = 0;
+                break;
+            case TRANSIT:
+                delta_min = 3;
+                delta_max = 12;
+                break;
+            default:
+                delta_max = 12;
+                delta_min = 3;
+
+        }
+
+
+
+        double max_radius = (gridBaseTime + delta_max)/ratio; //radius estimation based on speed of transit mode
+        double min_radius = (gridBaseTime - delta_min)/ratio;  //radius estimation based on speed of transit mode
         double dRadius = (max_radius - min_radius)/(numberOfRadii - 1);
 
         for (int i =0; i<numberOfRadii; i++) {
@@ -275,5 +303,58 @@ public class CircleGrid implements Grid {
         return data;
     }
 
+    public ArrayList<ArrayList<LatLng>> getPointsByTime(){
+        ArrayList<LatLng> inners = new ArrayList<>();
+        ArrayList<LatLng> outers = new ArrayList<>();
+        ArrayList<ArrayList<LatLng>> pts = new ArrayList<>();
+
+        for (int radiusIndex = 0; radiusIndex < numberOfRadii - 1; radiusIndex++) {
+            for (int angleIndex = 0; angleIndex < numberOfAngles; angleIndex++) {
+                int nextAngleIndex = (angleIndex + 1) % numberOfAngles;
+
+                //counter clock-wise
+                Double a = timeData.get(radiusIndex).get(angleIndex);
+                LatLng pointA = points.get(radiusIndex).get(angleIndex);
+                Double b = timeData.get(radiusIndex).get(nextAngleIndex);
+                LatLng pointB = points.get(radiusIndex).get(nextAngleIndex);
+                Double c = timeData.get(radiusIndex + 1).get(nextAngleIndex);
+                LatLng pointC = points.get(radiusIndex + 1).get(nextAngleIndex);
+                Double d = timeData.get(radiusIndex + 1).get(angleIndex);
+                LatLng pointD = points.get(radiusIndex + 1).get(angleIndex);
+
+                Log.d("GRID", "a: " + String.valueOf(a));
+                Log.d("GRID", "b: " + String.valueOf(b));
+                Log.d("GRID", "c: " + String.valueOf(c));
+                Log.d("GRID", "d: " + String.valueOf(d));
+
+                if(isInner(a)){
+                    inners.add(pointA);
+                }else{
+                    outers.add(pointA);
+                }
+                if(isInner(b)){
+                    inners.add(pointB);
+                }else{
+                    outers.add(pointB);
+                }
+                if(isInner(c)){
+                    inners.add(pointC);
+                }else{
+                    outers.add(pointC);
+                }
+                if(isInner(d)){
+                    inners.add(pointD);
+                }else{
+                    outers.add(pointD);
+                }
+
+            }
+
+        }
+
+        pts.add(inners);
+        pts.add(outers);
+        return pts;
+    }
 }
 

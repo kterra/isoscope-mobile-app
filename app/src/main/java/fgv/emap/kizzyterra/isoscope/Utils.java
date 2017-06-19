@@ -27,49 +27,49 @@ public class Utils {
     //http://www.w3ii.com/pt/android/android_internal_storage.html
     //https://pt.stackoverflow.com/questions/48196/salvamento-de-dados-em-android
 
-    public static ArrayList listFromFile(String filename){
-
-
-    }
+//    public static ArrayList listFromFile(String filename){
+//
+//
+//    }
 
 //    public static ArrayList matrixFromFile(String filename){
 //
 //    }
 //
-    public static void listToFile(ArrayList sampleList, String fileName, Context ctx){
-        String commaSeparatedValues = "";
-
-        /** If the list is not null and the list size is not zero, do the processing**/
-        if (sampleList != null) {
-
-            /**Iterate through the list and append comma after each values**/
-            Iterator<String> iter = sampleList.iterator();
-            while (iter.hasNext()) {
-                commaSeparatedValues += iter.next() + ",";
-            }
-            /**Remove the last comma**/
-            if (commaSeparatedValues.endsWith(",")) {
-                commaSeparatedValues = commaSeparatedValues.substring(0,
-                        commaSeparatedValues.lastIndexOf(","));
-            }
-        }
-
-            try {
-
-                FileOutputStream outputStream = null;
-                try {
-                    outputStream = ctx.getApplicationContext().openFileOutput(fileName, Context.MODE_PRIVATE);
-                    outputStream.write(commaSeparatedValues.getBytes());
-                    outputStream.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-
-    }
+//    public static void listToFile(ArrayList sampleList, String fileName, Context ctx){
+//        String commaSeparatedValues = "";
+//
+//        /** If the list is not null and the list size is not zero, do the processing**/
+//        if (sampleList != null) {
+//
+//            /**Iterate through the list and append comma after each values**/
+//            Iterator<String> iter = sampleList.iterator();
+//            while (iter.hasNext()) {
+//                commaSeparatedValues += iter.next() + ",";
+//            }
+//            /**Remove the last comma**/
+//            if (commaSeparatedValues.endsWith(",")) {
+//                commaSeparatedValues = commaSeparatedValues.substring(0,
+//                        commaSeparatedValues.lastIndexOf(","));
+//            }
+//        }
+//
+//            try {
+//
+//                FileOutputStream outputStream = null;
+//                try {
+//                    outputStream = ctx.getApplicationContext().openFileOutput(fileName, Context.MODE_PRIVATE);
+//                    outputStream.write(commaSeparatedValues.getBytes());
+//                    outputStream.close();
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//
+//
+//    }
 
 //    public static void matrixToFile(ArrayList matrix, String filename){
 //

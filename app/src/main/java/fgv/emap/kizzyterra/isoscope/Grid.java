@@ -8,7 +8,7 @@ import java.util.ArrayList;
 
 public interface Grid {
 
-    void  buildGrid();
+    void  buildGrid(int mode);
     void setTimeData(ArrayList<ArrayList<Double>> times);
 
 }
