@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+
+    <ScrollView
+        android:orientation="vertical" android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp"
+        android:paddingRight="10dp"
+        android:paddingLeft="10dp">
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <android.support.v7.widget.CardView
+            xmlns:card_view="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/card_view"
+            android:layout_gravity="top"
+            android:layout_marginBottom="15dp"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:clickable="true"
+            android:onClick="onClickCardReference"
+            card_view:cardCornerRadius="4dp">
+            <!--<fragment-->
+            <!--android:id="@+id/place_autocomplete_fragment"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment" />-->
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="center_vertical" >
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_place_24dp"
+                    android:padding="10dp"
+                    android:layout_gravity="center_vertical"/>
+                <TextView
+                    android:text="@string/address_reference"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/location_reference"
+                    android:textSize="16dp"
+                    android:paddingEnd="10dp"
+                    android:layout_gravity="center_vertical"
+                    android:textColor="@color/colorPrimaryDisable"
+                    android:fontFamily="sans-serif-condensed"/>
+            </LinearLayout>
+        </android.support.v7.widget.CardView>
+        <TextView
+            android:text="@string/mode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/mode"
+            android:textSize="16dp"
+            android:textAllCaps="true"
+            android:textColor="@color/colorPrimaryDisable"
+            android:fontFamily="sans-serif-condensed"/>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/colorPrimaryDisable"
+            android:layout_marginBottom="10dp">
+        </View>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="15dp">
+
+
+            <Button
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:id="@+id/walking"
+                android:text="@string/walking"
+                android:textColor="@color/menu_button_selected_text_color"
+                android:background="@drawable/menu_button_selected"
+                android:fontFamily="sans-serif-condensed"
+                android:drawableTop="@drawable/ic_directions_walk_white_24dp"
+                android:paddingTop="15dp"
+                android:paddingBottom="10dp"
+                android:drawablePadding="-15dp"
+                android:textSize="12dp"
+                android:layout_margin="5dp"
+                />
+
+            <Button
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:id="@+id/driving"
+                android:text="@string/driving"
+                android:textColor="@color/menu_button_text_color"
+                android:background="@drawable/menu_button"
+                android:fontFamily="sans-serif-condensed"
+                android:drawableTop="@drawable/ic_directions_car_24dp"
+                android:paddingTop="15dp"
+                android:paddingBottom="10dp"
+                android:drawablePadding="-15dp"
+                android:textSize="12dp"
+                android:layout_margin="5dp"
+                />
+
+            <Button
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:id="@+id/transit"
+                android:text="@string/transit"
+                android:textColor="@color/menu_button_text_color"
+                android:background="@drawable/menu_button"
+                android:fontFamily="sans-serif-condensed"
+                android:drawableTop="@drawable/ic_directions_transit_24dp"
+                android:paddingTop="15dp"
+                android:paddingBottom="10dp"
+
+                android:textSize="12dp"
+                android:layout_margin="5dp"
+                />
+
+        </LinearLayout>
+
+        <TextView
+            android:text="@string/time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/time"
+            android:textSize="16dp"
+            android:textAllCaps="true"
+            android:textColor="@color/colorPrimaryDisable"
+            android:fontFamily="sans-serif-condensed"/>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/colorPrimaryDisable"
+            android:layout_marginBottom="10dp">
+        </View>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="5dp">
+
+            <Button
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:id="@+id/fiveminutes"
+                android:text="@string/five_minutes"
+                android:textColor="@color/menu_button_selected_text_color"
+                android:background="@drawable/menu_button_selected"
+                android:fontFamily="sans-serif-condensed"
+                android:textSize="14dp"
+                android:layout_margin="3dp"
+                />
+
+
+
+            <Button
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:id="@+id/fifteenminutes"
+                android:text="@string/fifteen_minutes"
+                android:textColor="@color/menu_button_text_color"
+                android:background="@drawable/menu_button"
+                android:fontFamily="sans-serif-condensed"
+                android:textSize="14dp"
+                android:layout_margin="3dp"
+                />
+
+            <Button
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:id="@+id/twentyminutes"
+                android:text="@string/twenty_minutes"
+                android:textColor="@color/menu_button_text_color"
+                android:background="@drawable/menu_button"
+                android:fontFamily="sans-serif-condensed"
+                android:textSize="14dp"
+                android:layout_margin="3dp"
+                />
+
+            <Button
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:id="@+id/thirtyminutes"
+                android:text="@string/thirty_minutes"
+                android:textColor="@color/menu_button_text_color"
+                android:background="@drawable/menu_button"
+                android:fontFamily="sans-serif-condensed"
+                android:textSize="14dp"
+                android:layout_margin="3dp"
+                />
+
+            <Button
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:id="@+id/sixtyminutes"
+                android:text="@string/sixty_minutes"
+                android:textColor="@color/menu_button_text_color"
+                android:background="@drawable/menu_button"
+                android:fontFamily="sans-serif-condensed"
+                android:textSize="14dp"
+                android:layout_margin="3dp"
+                />
+
+
+
+
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="5dp">
+
+            <View
+                android:layout_width="150dp"
+                android:layout_height="1dp"
+                android:background="@color/colorPrimaryDisable"
+                android:layout_gravity="center_vertical"
+                >
+            </View>
+
+            <TextView
+                android:text="@string/or"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:id="@+id/or"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:textSize="12dp"
+                android:textColor="@color/colorPrimaryDisable"
+                android:fontFamily="sans-serif-condensed"/>
+
+            <View
+                android:layout_width="150dp"
+                android:layout_height="1dp"
+                android:background="@color/colorPrimaryDisable"
+                android:layout_gravity="center_vertical">
+            </View>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="10dp">
+
+
+            <EditText
+                android:layout_width="60dp"
+                android:layout_height="50dp"
+                android:id="@+id/hours_edit"
+                android:textColor="@color/menu_button_text_color"
+                android:background="@drawable/menu_button"
+                android:fontFamily="sans-serif-condensed"
+                android:padding="10dp"
+                android:textSize="16dp"
+                android:inputType="number"
+                android:layout_margin="5dp"
+                />
+
+            <TextView
+                android:text="@string/hours"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:id="@+id/hours"
+                android:textSize="16dp"
+                android:layout_marginRight="10dp"
+                android:textColor="@color/colorPrimary"
+                android:fontFamily="sans-serif-condensed"/>
+
+            <EditText
+                android:layout_width="60dp"
+                android:layout_height="50dp"
+                android:id="@+id/minutes_edit"
+                android:textColor="@color/menu_button_text_color"
+                android:background="@drawable/menu_button"
+                android:fontFamily="sans-serif-condensed"
+                android:layout_gravity="center"
+                android:inputType="number"
+                android:textSize="16dp"
+                android:padding="10dp"
+                android:layout_margin="5dp"
+                />
+
+            <TextView
+                android:text="@string/minutes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:id="@+id/minutes"
+                android:textSize="16dp"
+                android:textColor="@color/colorPrimary"
+                android:fontFamily="sans-serif-condensed"/>
+
+            <EditText
+                android:layout_width="60dp"
+                android:layout_height="50dp"
+                android:id="@+id/seconds_edit"
+                android:textColor="@color/menu_button_text_color"
+                android:background="@drawable/menu_button"
+                android:fontFamily="sans-serif-condensed"
+                android:textSize="16dp"
+                android:inputType="number"
+                android:padding="10dp"
+                android:layout_margin="5dp"
+                />
+
+            <TextView
+                android:text="@string/seconds"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:id="@+id/seconds"
+                android:textSize="16dp"
+                android:textColor="@color/colorPrimary"
+                android:fontFamily="sans-serif-condensed"/>
+
+        </LinearLayout>
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:id="@+id/gotomap"
+            android:text="@string/gotomap"
+            android:textColor="@color/menu_button_selected_text_color"
+            android:backgroundTint="@color/colorPrimary"
+            android:fontFamily="sans-serif-condensed"
+            android:textSize="16dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="2dp"
+            android:layout_marginRight="2dp"
+            android:padding="5dp"
+            />
+    </LinearLayout>
+
+    </ScrollView>
+
+</FrameLayout>

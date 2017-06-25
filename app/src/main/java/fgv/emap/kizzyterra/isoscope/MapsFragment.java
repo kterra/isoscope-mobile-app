@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.AsyncTask;
-import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
@@ -14,9 +13,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.places.Places;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -78,7 +74,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, MapDra
         // don't recreate fragment everytime ensure last map location/state are maintain
         if (supportMapFragment == null) {
 
-            MODE = DRIVING;
+            MODE = WALKING;
             rootView = inflater.inflate(R.layout.fragment_map, container, false);
 
             supportMapFragment = SupportMapFragment.newInstance();
@@ -331,8 +327,10 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, MapDra
             grid.setTimeData(times);
             Log.d(TAG, times.toString());
             // drawGrid(grid.getPointsByTime());
-            drawIsochroneBySegment(grid.getIsochroneCell());
 
+            HashMap<ArrayList<LatLng>, ArrayList<Tuple>> data = grid.getIsochroneSegments();
+            drawIsochroneBySegment(data);
+            Log.d(TAG, String.valueOf(Utils.estimatePolygonArea(data)));
 
 
         }

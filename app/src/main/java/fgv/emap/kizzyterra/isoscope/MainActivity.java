@@ -52,10 +52,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     private static final int ISOCHRONE_DURATION_REQUEST_CODE = 1;
     private static final int PLACE_AUTOCOMPLETE_REQUEST_CODE_CARD_START = 2;
     private static final int PLACE_AUTOCOMPLETE_REQUEST_CODE_CARD_END = 3;
+    private static final int PLACE_AUTOCOMPLETE_REQUEST_CODE_CARD_REFERENCE = 4;
     private Double isochroneDuration = 0.0;
     private GoogleApiClient mGoogleApiClient;
     private LocFragment lf;
     private MapsFragment mf;
+    private TimeFragment tf;
     private RankFragment rf;
 
 
@@ -168,10 +170,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                     }
                     return  lf;
                 case 1:
-                    if(mf == null){
-                        mf = new MapsFragment();
+                    if(tf == null){
+                        tf = new TimeFragment();
                     }
-                    return  mf;
+                    return  tf;
                 case 2:
                     if(rf == null){
                         rf = new RankFragment();
@@ -231,6 +233,21 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                     new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_FULLSCREEN)
                             .build(this);
             startActivityForResult(intent, PLACE_AUTOCOMPLETE_REQUEST_CODE_CARD_END);
+        } catch (GooglePlayServicesRepairableException e) {
+            // TODO: Handle the error.
+        } catch (GooglePlayServicesNotAvailableException e) {
+            // TODO: Handle the error.
+        }
+
+    }
+
+    public void onClickCardReference(View v) {
+
+        try {
+            Intent intent =
+                    new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_FULLSCREEN)
+                            .build(this);
+            startActivityForResult(intent, PLACE_AUTOCOMPLETE_REQUEST_CODE_CARD_REFERENCE);
         } catch (GooglePlayServicesRepairableException e) {
             // TODO: Handle the error.
         } catch (GooglePlayServicesNotAvailableException e) {

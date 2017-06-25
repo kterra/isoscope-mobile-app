@@ -178,7 +178,7 @@ public class CircleGrid implements Grid {
 
     }
 
-    public HashMap getIsochroneCell(){
+    public HashMap getIsochroneSegments(){
 
         ArrayList<Tuple<Integer, Integer>> segments = new ArrayList<>();
         HashMap<LatLng, Integer> pmap = new HashMap();

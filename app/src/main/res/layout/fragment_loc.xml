@@ -47,7 +47,7 @@
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@drawable/ic_my_location_24dp"
+                android:src="@drawable/ic_place_24dp"
                 android:padding="10dp"
                 android:layout_gravity="center_vertical"/>
                 <TextView
@@ -81,7 +81,7 @@
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/ic_place_24dp"
+                    android:src="@drawable/ic_pin_drop_24dp"
                     android:padding="10dp"
                     android:layout_gravity="center_vertical"/>
                 <TextView

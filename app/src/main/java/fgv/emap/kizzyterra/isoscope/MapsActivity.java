@@ -1,12 +1,8 @@
 package fgv.emap.kizzyterra.isoscope;
 
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.location.Address;
-import android.location.Geocoder;
 import android.os.AsyncTask;
-import android.support.annotation.IntegerRes;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.os.Bundle;
@@ -36,40 +32,16 @@ import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.Circle;
-import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
-import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.api.client.extensions.android.http.AndroidHttp;
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpRequestInitializer;
-import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.JsonObjectParser;
-import com.google.api.client.json.jackson.JacksonFactory;
-import com.google.api.client.repackaged.com.google.common.base.Strings;
-import com.google.maps.android.SphericalUtil;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
@@ -716,7 +688,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
             grid.setTimeData(times);
             Log.d(TAG, times.toString());
            // drawGrid(grid.getPointsByTime());
-            drawIsochroneBySegment(grid.getIsochroneCell());
+            drawIsochroneBySegment(grid.getIsochroneSegments());
 
 
 

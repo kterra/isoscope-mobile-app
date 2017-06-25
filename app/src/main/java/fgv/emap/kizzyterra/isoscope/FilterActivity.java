@@ -2,6 +2,7 @@ package fgv.emap.kizzyterra.isoscope;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -22,10 +23,15 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.model.LatLng;
 
-public class FilterActivity extends AppCompatActivity implements View.OnClickListener{
+public class FilterActivity extends AppCompatActivity {
 
     private static final String TAG = "Filter";
-    private Double isochroneDuration = 0.0;
+    private Double isochroneDuration = 5.0;
+    private static final int BICYCLING = 1000;
+    private static final int DRIVING = 2000;
+    private static final int WALKING = 3000;
+    private static final int TRANSIT = 4000;
+    private int MODE = WALKING;
     private static final int PLACE_AUTOCOMPLETE_REQUEST_CODE = 2;
     private LatLng lastPositionSelected;
 
@@ -34,9 +40,8 @@ public class FilterActivity extends AppCompatActivity implements View.OnClickLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu);
 
-        Button filterButton = (Button) findViewById(R.id.gotomap);
-
-       // filterButton.setOnClickListener(this);
+//        Button filterButton = (Button) findViewById(R.id.gotomap);
+//        filterButton.setOnClickListener(this);
     }
 
     public void onClickCard(View v) {
@@ -54,9 +59,54 @@ public class FilterActivity extends AppCompatActivity implements View.OnClickLis
 
     }
 
-    public void onClick(View v) {
+    public void onClickButton(View v) {
 
+        if(lastPositionSelected == null){
+           Toast.makeText(this,"Selecione um ponto de referência!",Toast.LENGTH_LONG).show();
+            Log.i(TAG, "null");
 
+        }else {
+
+            Integer hours;
+            Integer minutes;
+            Integer seconds;
+
+            EditText editTextHour = (EditText) findViewById(R.id.editText2);
+            EditText editTextMinute = (EditText) findViewById(R.id.editText3);
+            EditText editTextSecond = (EditText) findViewById(R.id.editText4);
+
+            try {
+                hours = Integer.valueOf(editTextHour.getText().toString());
+            } catch (NumberFormatException ne) {
+                hours = 0;
+            }
+
+            try {
+                minutes = Integer.valueOf(editTextMinute.getText().toString());
+            } catch (NumberFormatException ne) {
+                minutes = 0;
+            }
+
+            try {
+                seconds = Integer.valueOf(editTextSecond.getText().toString());
+            } catch (NumberFormatException ne) {
+                seconds = 0;
+            }
+
+            Double isochroneDurationInserted;
+            isochroneDurationInserted = hours * 60.0 + minutes + seconds / 60.0;
+
+            if (isochroneDurationInserted > 0) {
+                isochroneDuration = isochroneDurationInserted;
+            } else {
+
+            }
+
+            Intent intent = new Intent();
+            intent.putExtra("duration", isochroneDuration);
+            setResult(RESULT_OK, intent);
+            finish();
+        }
     }
 
     @Override

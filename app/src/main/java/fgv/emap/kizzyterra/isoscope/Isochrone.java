@@ -16,7 +16,7 @@ public class Isochrone {
     public LatLng origin;
 
 //    ArrayList getIsochrone();
-//    ArrayList getIsochroneCell();
+//    ArrayList getIsochroneSegments();
 //    void drawIsochrone();
 
     public void setPoints(ArrayList<LatLng> pts){

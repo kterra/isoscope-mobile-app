@@ -12,6 +12,8 @@ import android.view.ViewGroup;
 
 public class RankFragment extends Fragment {
 
+    private static final String TAG = "RankFrag";
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {

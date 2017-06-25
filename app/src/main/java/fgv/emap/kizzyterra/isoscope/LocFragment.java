@@ -23,7 +23,7 @@ public class LocFragment extends Fragment {
 
     private static final int PLACE_AUTOCOMPLETE_REQUEST_CODE_CARD_START = 2;
     private static final int PLACE_AUTOCOMPLETE_REQUEST_CODE_CARD_END = 3;
-    private static final String TAG = "Loc";
+    private static final String TAG = "LocFrag";
     private View rootView;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,

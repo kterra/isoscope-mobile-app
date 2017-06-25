@@ -11,6 +11,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -74,6 +75,38 @@ public class Utils {
 //    public static void matrixToFile(ArrayList matrix, String filename){
 //
 //    }
+
+    public static double getUtility(double area, double time, double cost){
+
+        double utility = -4.76 +0.147*area - 0.041*time - 2.24*cost;
+
+        return  utility;
+    }
+
+    public static double estimatePolygonArea(HashMap<ArrayList<LatLng>, ArrayList<Tuple>> data)
+    {
+        double area = 0;
+        try {
+            ArrayList<LatLng> isochrone = (ArrayList<LatLng>) data.keySet().toArray()[0];
+
+            ArrayList<Tuple> segments = data.get(isochrone);
+            for (Tuple tuple: segments){
+
+                LatLng p1 = isochrone.get((int)tuple.x);
+                LatLng p2 = isochrone.get((int)tuple.y);
+
+                area += (p2.longitude - p1.longitude) * (2 + Math.sin(Math.toRadians(p1.latitude)) + Math.sin(Math.toRadians(p2.latitude)));
+
+            }
+            area = area * 6378137 * 6378137 / 2;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return Math.abs(area);
+    }
+
 
     public static LatLng haversine(LatLng origin, double angle, double radius){
 
