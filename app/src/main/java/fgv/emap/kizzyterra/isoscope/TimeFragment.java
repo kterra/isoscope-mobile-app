@@ -24,7 +24,8 @@ public class TimeFragment extends Fragment {
     private static final int PLACE_AUTOCOMPLETE_REQUEST_CODE_CARD_REFERENCE = 4;
     private static final String TAG = "TimeTab";
     private View rootView;
-    private LatLng lastPositionSelected;
+    private MainActivity parentActivity;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -32,6 +33,9 @@ public class TimeFragment extends Fragment {
 
 
         rootView = inflater.inflate(R.layout.fragment_time, container, false);
+        parentActivity =  (MainActivity) getActivity();
+
+
 
         return rootView;
     }
@@ -48,7 +52,8 @@ public class TimeFragment extends Fragment {
                 TextView referencePoint = (TextView) rootView.findViewById(R.id.location_reference);
                 referencePoint.setText(addressReturned);
                 referencePoint.setTextColor(ContextCompat.getColor(getActivity(), R.color.colorPrimary));
-                lastPositionSelected = place.getLatLng();
+                parentActivity.isochroneCenterAddress = addressReturned.toString();
+                parentActivity.isochroneCenterCoordinate = place.getLatLng();
 
 
 
@@ -63,5 +68,6 @@ public class TimeFragment extends Fragment {
         }
 
     }
+
 }
 

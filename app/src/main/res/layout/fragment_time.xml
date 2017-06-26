@@ -159,11 +159,12 @@
                 android:layout_height="60dp"
                 android:id="@+id/fiveminutes"
                 android:text="@string/five_minutes"
-                android:textColor="@color/menu_button_selected_text_color"
-                android:background="@drawable/menu_button_selected"
+                android:textColor="@color/menu_button_text_color"
+                android:background="@drawable/menu_button"
                 android:fontFamily="sans-serif-condensed"
                 android:textSize="14dp"
                 android:layout_margin="3dp"
+                android:onClick="onClickTimeFragFiveMinutesButton"
                 />
 
 
@@ -178,6 +179,7 @@
                 android:fontFamily="sans-serif-condensed"
                 android:textSize="14dp"
                 android:layout_margin="3dp"
+                android:onClick="onClickTimeFragFifTeenMinutesButton"
                 />
 
             <Button
@@ -190,6 +192,7 @@
                 android:fontFamily="sans-serif-condensed"
                 android:textSize="14dp"
                 android:layout_margin="3dp"
+                android:onClick="onClickTimeFragTwentyMinutesButton"
                 />
 
             <Button
@@ -202,6 +205,7 @@
                 android:fontFamily="sans-serif-condensed"
                 android:textSize="14dp"
                 android:layout_margin="3dp"
+                android:onClick="onClickTimeFragThirtyMinutesButton"
                 />
 
             <Button
@@ -214,6 +218,7 @@
                 android:fontFamily="sans-serif-condensed"
                 android:textSize="14dp"
                 android:layout_margin="3dp"
+                android:onClick="onClickTimeFragSixtyMinutesButton"
                 />
 
 
@@ -341,17 +346,18 @@
 
         <Button
             android:layout_width="match_parent"
-            android:layout_height="60dp"
+            android:layout_height="65dp"
             android:id="@+id/gotomap"
             android:text="@string/gotomap"
             android:textColor="@color/menu_button_selected_text_color"
             android:backgroundTint="@color/colorPrimary"
             android:fontFamily="sans-serif-condensed"
             android:textSize="16dp"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="5dp"
             android:layout_marginLeft="2dp"
             android:layout_marginRight="2dp"
             android:padding="5dp"
+            android:onClick="onClickTimeFragButton"
             />
     </LinearLayout>
 

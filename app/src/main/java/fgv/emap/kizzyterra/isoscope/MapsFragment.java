@@ -205,26 +205,6 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, MapDra
 
     }
 
-    @Override
-    public void drawRegion(ArrayList<LatLng> regionPoints) {
-
-        //mMap.clear();
-
-
-        mMap.addMarker(new MarkerOptions().position(lastPositionSelected));
-
-
-        PolygonOptions rectOptions = new PolygonOptions()
-                .strokeWidth(2.0f)
-                .fillColor(Color.argb(150, 102, 140, 255))
-                .strokeColor(Color.argb(150, 102, 140, 255));
-        //ArrayList<LatLng> convexHullPoints =  getConvexHull(regionPoints);
-        for (LatLng p : regionPoints){
-            rectOptions.add(p);
-        }
-        mMap.addPolygon(rectOptions);
-
-    }
 
     @Override
     public void drawIsochroneBySegment(HashMap<ArrayList<LatLng>, ArrayList<Tuple>> data){
@@ -330,7 +310,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, MapDra
 
             HashMap<ArrayList<LatLng>, ArrayList<Tuple>> data = grid.getIsochroneSegments();
             drawIsochroneBySegment(data);
-            Log.d(TAG, String.valueOf(Utils.estimatePolygonArea(data)));
+           // Log.d(TAG, String.valueOf(Utils.estimatePolygonArea(data)));
 
 
         }

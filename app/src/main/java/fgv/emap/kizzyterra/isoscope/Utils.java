@@ -11,6 +11,8 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -83,21 +85,21 @@ public class Utils {
         return  utility;
     }
 
-    public static double estimatePolygonArea(HashMap<ArrayList<LatLng>, ArrayList<Tuple>> data)
+    public static double estimatePolygonArea(ArrayList<LatLng> points)
     {
         double area = 0;
         try {
-            ArrayList<LatLng> isochrone = (ArrayList<LatLng>) data.keySet().toArray()[0];
 
-            ArrayList<Tuple> segments = data.get(isochrone);
-            for (Tuple tuple: segments){
+            int numberOfPoints = points.size();
+            points.add(points.get(0));
 
-                LatLng p1 = isochrone.get((int)tuple.x);
-                LatLng p2 = isochrone.get((int)tuple.y);
+            for (int i = 0; i < numberOfPoints -1; i++){
+                LatLng p1 = points.get(i);
+                LatLng p2 = points.get(i+1);
 
-                area += (p2.longitude - p1.longitude) * (2 + Math.sin(Math.toRadians(p1.latitude)) + Math.sin(Math.toRadians(p2.latitude)));
-
+                area += (Math.toRadians(p2.longitude) - Math.toRadians(p1.longitude)) * (2 + Math.sin(Math.toRadians(p1.latitude)) + Math.sin(Math.toRadians(p2.latitude)));
             }
+
             area = area * 6378137 * 6378137 / 2;
 
         } catch (Exception e) {
@@ -107,6 +109,30 @@ public class Utils {
         return Math.abs(area);
     }
 
+//    public static double estimatePolygonArea(HashMap<ArrayList<LatLng>, ArrayList<Tuple>> data)
+//    {
+//        double area = 0;
+//        try {
+//            ArrayList<LatLng> isochrone = (ArrayList<LatLng>) data.keySet().toArray()[0];
+//
+//
+//            ArrayList<Tuple> segments = data.get(isochrone);
+//            for (Tuple tuple: segments){
+//
+//                LatLng p1 = isochrone.get((int)tuple.x);
+//                LatLng p2 = isochrone.get((int)tuple.y);
+//
+//                area += (p2.longitude - p1.longitude) * (2 + Math.sin(Math.toRadians(p1.latitude)) + Math.sin(Math.toRadians(p2.latitude)));
+//
+//            }
+//            area = area * 6378137 * 6378137 / 2;
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//
+//        return Math.abs(area);
+//    }
 
     public static LatLng haversine(LatLng origin, double angle, double radius){
 
@@ -163,5 +189,7 @@ public class Utils {
         }
         return sum;
     }
+
+
 
 }

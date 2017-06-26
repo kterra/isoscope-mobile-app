@@ -39,11 +39,11 @@
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@drawable/ic_directions_transit_24dp"
+                android:src="@drawable/ic_directions_car_24dp"
                 android:padding="10dp"
                 android:layout_gravity="center_vertical"/>
             <TextView
-                android:text="15 min"
+                android:text="5 min"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/time"
@@ -128,7 +128,7 @@
                     android:padding="10dp"
                     android:layout_gravity="center_vertical"/>
                 <TextView
-                    android:text="15 min"
+                    android:text="5 min"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/time2"

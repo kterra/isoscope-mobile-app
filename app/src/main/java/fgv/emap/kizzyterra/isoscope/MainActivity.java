@@ -25,6 +25,10 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
@@ -36,6 +40,8 @@ import com.google.android.gms.location.places.Places;
 import com.google.android.gms.location.places.ui.PlaceAutocomplete;
 import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
 import com.google.android.gms.location.places.ui.PlaceSelectionListener;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.StreetViewPanoramaCamera;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener {
 
@@ -53,12 +59,45 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     private static final int PLACE_AUTOCOMPLETE_REQUEST_CODE_CARD_START = 2;
     private static final int PLACE_AUTOCOMPLETE_REQUEST_CODE_CARD_END = 3;
     private static final int PLACE_AUTOCOMPLETE_REQUEST_CODE_CARD_REFERENCE = 4;
-    private Double isochroneDuration = 0.0;
-    private GoogleApiClient mGoogleApiClient;
+    private static final double SIXTY_MINUTES = 60.0;
+    private static final double THIRTY_MINUTES = 30.0;
+    private static final double TWENTY_MINUTES = 20.0;
+    private static final double FIFTEEN_MINUTES = 15.0;
+    private static final double FIVE_MINUTES = 5.0;
+    private static final int BICYCLING = 1000;
+    private static final int DRIVING = 2000;
+    private static final int WALKING = 3000;
+    private static final int TRANSIT = 4000;
+    private int MODE;
     private LocFragment lf;
-    private MapsFragment mf;
     private TimeFragment tf;
     private RankFragment rf;
+    public double isochroneDuration = 0.0;
+    public String isochroneCenterAddress;
+    public LatLng isochroneCenterCoordinate;
+    public String isochroneEndAddress;
+    public LatLng isochroneEndCoordinate;
+    public boolean FIVE_MINUTES_SELECTED = false;
+    public boolean FIFTEEN_MINUTES_SELECTED = false;
+    public boolean TWENTY_MINUTES_SELECTED = false;
+    public boolean THIRTY_MINUTES_SELECTED = false;
+    public boolean SIXTY_MINUTES_SELECTED = false;
+
+    public boolean WALKING_SELECTED = true;
+    public boolean DRIVING_SELECTED = false;
+    public boolean TRANSIT_SELECTED = false;
+
+    private int LOC_FRAGMENT_ID =1;
+    private int TIME_FRAGMENT_ID = 2;
+    private int RANK_FRAGMENT_ID = 3;
+    private String FRAGMENT_ID = "ID";
+    private String MODE_VALUE = "MODE";
+    private String TIME_VALUE = "TIME";
+    private String CENTER_ADDRESS_VALUE = "CENTER_ADDRESS";
+    private String CENTER_LAT_VALUE = "CENTER_LAT";
+    private String CENTER_LONG_VALUE = "CENTER_LONG";
+    private String END_ADDRESS_VALUE = "END_ADDRESS";
+    private String END_COORDINATE_VALUE = "END_COORDINATE";
 
 
     /**
@@ -86,12 +125,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         mViewPager.setCurrentItem(1);
         tabLayout.setupWithViewPager(mViewPager);
 
-        mGoogleApiClient = new GoogleApiClient
-                .Builder(this)
-                .addApi(Places.GEO_DATA_API)
-                .addApi(Places.PLACE_DETECTION_API)
-                .enableAutoManage(this, this)
-                .build();
+        MODE = WALKING;
 
 //        PlaceAutocompleteFragment autocompleteFragment = (PlaceAutocompleteFragment)
 //                getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
@@ -143,6 +177,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         for(Fragment frag : getSupportFragmentManager().getFragments()){
             frag.onActivityResult(requestCode, resultCode, data);
         }
+
     }
 
     @Override
@@ -255,6 +290,281 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         }
 
     }
+
+    public void onClickWalkingButton(View v){
+
+    }
+
+    public void onClickDrivingButton(View v){
+
+    }
+    public void onClickTransitButton(View v){
+
+    }
+
+
+    public void onClickTimeFragFiveMinutesButton(View v){
+
+        Button five_minutes = (Button) v;
+        if (!FIVE_MINUTES_SELECTED){
+            five_minutes.setBackground(getDrawable(R.drawable.menu_button_selected));
+            five_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_selected_text_color));
+            FIVE_MINUTES_SELECTED = true;
+            isochroneDuration = FIVE_MINUTES;
+
+            if(FIFTEEN_MINUTES_SELECTED){
+                Button fifteen_minutes = (Button) findViewById(R.id.fifteenminutes);
+                fifteen_minutes.setBackground(getDrawable(R.drawable.menu_button));
+                fifteen_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+                FIFTEEN_MINUTES_SELECTED = false;
+            }
+            if(TWENTY_MINUTES_SELECTED){
+                Button twenty_minutes = (Button) findViewById(R.id.twentyminutes);
+                twenty_minutes.setBackground(getDrawable(R.drawable.menu_button));
+                twenty_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+                TWENTY_MINUTES_SELECTED = false;
+            }
+            if(THIRTY_MINUTES_SELECTED){
+                Button thirty_minutes = (Button) findViewById(R.id.thirtyminutes);
+                thirty_minutes.setBackground(getDrawable(R.drawable.menu_button));
+                thirty_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+                THIRTY_MINUTES_SELECTED = false;
+            }
+            if(SIXTY_MINUTES_SELECTED){
+                Button sixty_minutes = (Button) findViewById(R.id.sixtyminutes);
+                sixty_minutes.setBackground(getDrawable(R.drawable.menu_button));
+                sixty_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+                SIXTY_MINUTES_SELECTED = false;
+            }
+
+        }else{
+            five_minutes.setBackground(getDrawable(R.drawable.menu_button));
+            five_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+            FIVE_MINUTES_SELECTED = false;
+            isochroneDuration = 0;
+        }
+
+    }
+
+    public void onClickTimeFragFifTeenMinutesButton(View v) {
+        Button fifteen_minutes = (Button) v;
+        if (!FIFTEEN_MINUTES_SELECTED) {
+            fifteen_minutes.setBackground(getDrawable(R.drawable.menu_button_selected));
+            fifteen_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_selected_text_color));
+            FIFTEEN_MINUTES_SELECTED = true;
+            isochroneDuration = FIFTEEN_MINUTES;
+
+            if(FIVE_MINUTES_SELECTED){
+                Button five_minutes = (Button) findViewById(R.id.fiveminutes);
+                five_minutes.setBackground(getDrawable(R.drawable.menu_button));
+                five_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+                FIVE_MINUTES_SELECTED = false;
+            }
+            if (TWENTY_MINUTES_SELECTED) {
+                Button twenty_minutes = (Button) findViewById(R.id.twentyminutes);
+                twenty_minutes.setBackground(getDrawable(R.drawable.menu_button));
+                twenty_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+                TWENTY_MINUTES_SELECTED = false;
+            }
+            if (THIRTY_MINUTES_SELECTED) {
+                Button thirty_minutes = (Button) findViewById(R.id.thirtyminutes);
+                thirty_minutes.setBackground(getDrawable(R.drawable.menu_button));
+                thirty_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+                THIRTY_MINUTES_SELECTED = false;
+            }
+            if (SIXTY_MINUTES_SELECTED) {
+                Button sixty_minutes = (Button) findViewById(R.id.sixtyminutes);
+                sixty_minutes.setBackground(getDrawable(R.drawable.menu_button));
+                sixty_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+                SIXTY_MINUTES_SELECTED = false;
+            }
+
+        }else{
+            fifteen_minutes.setBackground(getDrawable(R.drawable.menu_button));
+            fifteen_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+            FIFTEEN_MINUTES_SELECTED = false;
+            isochroneDuration = 0;
+        }
+    }
+
+    public void onClickTimeFragTwentyMinutesButton(View v){
+        Button twenty_minutes = (Button) v;
+        if (!TWENTY_MINUTES_SELECTED){
+            twenty_minutes.setBackground(getDrawable(R.drawable.menu_button_selected));
+            twenty_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_selected_text_color));
+            TWENTY_MINUTES_SELECTED = true;
+            isochroneDuration = TWENTY_MINUTES;
+
+            if(FIFTEEN_MINUTES_SELECTED){
+                Button fifteen_minutes = (Button) findViewById(R.id.fifteenminutes);
+                fifteen_minutes.setBackground(getDrawable(R.drawable.menu_button));
+                fifteen_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+                FIFTEEN_MINUTES_SELECTED = false;
+            }
+            if(FIVE_MINUTES_SELECTED){
+                Button five_minutes = (Button) findViewById(R.id.fiveminutes);
+                five_minutes.setBackground(getDrawable(R.drawable.menu_button));
+                five_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+                FIVE_MINUTES_SELECTED = false;
+            }
+            if(THIRTY_MINUTES_SELECTED){
+                Button thirty_minutes = (Button) findViewById(R.id.thirtyminutes);
+                thirty_minutes.setBackground(getDrawable(R.drawable.menu_button));
+                thirty_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+                THIRTY_MINUTES_SELECTED = false;
+            }
+            if(SIXTY_MINUTES_SELECTED){
+                Button sixty_minutes = (Button) findViewById(R.id.sixtyminutes);
+                sixty_minutes.setBackground(getDrawable(R.drawable.menu_button));
+                sixty_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+                SIXTY_MINUTES_SELECTED = false;
+            }
+    }else{
+            twenty_minutes.setBackground(getDrawable(R.drawable.menu_button));
+            twenty_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+            TWENTY_MINUTES_SELECTED = false;
+            isochroneDuration = 0;
+        }
+
+    }
+
+    public void onClickTimeFragThirtyMinutesButton(View v){
+        Button thirty_minutes = (Button) v;
+        if (!THIRTY_MINUTES_SELECTED){
+            thirty_minutes.setBackground(getDrawable(R.drawable.menu_button_selected));
+            thirty_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_selected_text_color));
+            THIRTY_MINUTES_SELECTED = true;
+            isochroneDuration =THIRTY_MINUTES;
+
+            if(FIFTEEN_MINUTES_SELECTED){
+                Button fifteen_minutes = (Button) findViewById(R.id.fifteenminutes);
+                fifteen_minutes.setBackground(getDrawable(R.drawable.menu_button));
+                fifteen_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+                FIFTEEN_MINUTES_SELECTED = false;
+            }
+            if(TWENTY_MINUTES_SELECTED){
+                Button twenty_minutes = (Button) findViewById(R.id.twentyminutes);
+                twenty_minutes.setBackground(getDrawable(R.drawable.menu_button));
+                twenty_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+                TWENTY_MINUTES_SELECTED = false;
+            }
+            if(FIVE_MINUTES_SELECTED){
+                Button five_minutes = (Button) findViewById(R.id.fiveminutes);
+                five_minutes.setBackground(getDrawable(R.drawable.menu_button));
+                five_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+                FIVE_MINUTES_SELECTED = false;
+            }
+            if(SIXTY_MINUTES_SELECTED){
+                Button sixty_minutes = (Button) findViewById(R.id.sixtyminutes);
+                sixty_minutes.setBackground(getDrawable(R.drawable.menu_button));
+                sixty_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+                SIXTY_MINUTES_SELECTED = false;
+            }
+    }else{
+            thirty_minutes.setBackground(getDrawable(R.drawable.menu_button));
+            thirty_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+            THIRTY_MINUTES_SELECTED = false;
+            isochroneDuration = 0;
+        }
+
+    }
+
+    public void onClickTimeFragSixtyMinutesButton(View v){
+        Button sixty_minutes = (Button) v;
+        if (!SIXTY_MINUTES_SELECTED){
+            sixty_minutes.setBackground(getDrawable(R.drawable.menu_button_selected));
+            sixty_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_selected_text_color));
+            SIXTY_MINUTES_SELECTED = true;
+            isochroneDuration = SIXTY_MINUTES;
+
+            if(FIFTEEN_MINUTES_SELECTED){
+                Button fifteen_minutes = (Button) findViewById(R.id.fifteenminutes);
+                fifteen_minutes.setBackground(getDrawable(R.drawable.menu_button));
+                fifteen_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+                FIFTEEN_MINUTES_SELECTED = false;
+            }
+            if(TWENTY_MINUTES_SELECTED){
+                Button twenty_minutes = (Button) findViewById(R.id.twentyminutes);
+                twenty_minutes.setBackground(getDrawable(R.drawable.menu_button));
+                twenty_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+                TWENTY_MINUTES_SELECTED = false;
+            }
+            if(THIRTY_MINUTES_SELECTED){
+                Button thirty_minutes = (Button) findViewById(R.id.thirtyminutes);
+                thirty_minutes.setBackground(getDrawable(R.drawable.menu_button));
+                thirty_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+                THIRTY_MINUTES_SELECTED = false;
+            }
+            if(FIVE_MINUTES_SELECTED){
+                Button five_minutes = (Button) findViewById(R.id.fiveminutes);
+                five_minutes.setBackground(getDrawable(R.drawable.menu_button));
+                five_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+                FIVE_MINUTES_SELECTED = false;
+            }
+        }else{
+            sixty_minutes.setBackground(getDrawable(R.drawable.menu_button));
+            sixty_minutes.setTextColor(ContextCompat.getColor(this, R.color.menu_button_text_color));
+            SIXTY_MINUTES_SELECTED = false;
+            isochroneDuration = 0;
+        }
+
+    }
+
+
+    public void onClickTimeFragButton(View v){
+        if(isochroneCenterCoordinate == null) {
+            Toast.makeText(this,"Selecione um ponto de referência!",Toast.LENGTH_LONG).show();
+        }else{
+            Integer hours;
+            Integer minutes;
+            Integer seconds;
+
+            EditText editTextHour = (EditText) findViewById(R.id.hours_edit);
+            EditText editTextMinute = (EditText) findViewById(R.id.minutes_edit);
+            EditText editTextSecond = (EditText) findViewById(R.id.seconds_edit);
+
+            try {
+                hours = Integer.valueOf(editTextHour.getText().toString());
+            } catch (NumberFormatException ne) {
+                hours = 0;
+            }
+
+            try {
+                minutes = Integer.valueOf(editTextMinute.getText().toString());
+            } catch (NumberFormatException ne) {
+                minutes = 0;
+            }
+
+            try {
+                seconds = Integer.valueOf(editTextSecond.getText().toString());
+            } catch (NumberFormatException ne) {
+                seconds = 0;
+            }
+
+            Double isochroneDurationInserted;
+            isochroneDurationInserted = hours * 60.0 + minutes + seconds / 60.0;
+
+            if (isochroneDurationInserted > 0) {
+                isochroneDuration = isochroneDurationInserted;
+            }
+
+            if (isochroneDuration == 0){
+                Toast.makeText(this,"Selecione a duração!",Toast.LENGTH_LONG).show();
+            }else{
+                Intent intent = new Intent(MainActivity.this, MapsActivity.class);
+                intent.putExtra(FRAGMENT_ID, TIME_FRAGMENT_ID);
+                intent.putExtra(MODE_VALUE, MODE);
+                intent.putExtra(TIME_VALUE, isochroneDuration);
+                intent.putExtra(CENTER_ADDRESS_VALUE, isochroneCenterAddress);
+                intent.putExtra(CENTER_LAT_VALUE, isochroneCenterCoordinate.latitude);
+                intent.putExtra(CENTER_LONG_VALUE, isochroneCenterCoordinate.longitude);
+
+                startActivity(intent);
+            }
+
+        }
+    }
+
 
 
 
