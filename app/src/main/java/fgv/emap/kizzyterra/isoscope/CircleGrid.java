@@ -21,7 +21,7 @@ public class CircleGrid implements Grid {
     public static final int numberOfAngles = 30;
     public static final int numberOfRadii = 5;
     private ArrayList<ArrayList<Double>> timeData;
-    public Double gridBaseTime;
+    public double gridBaseTime;
     public LatLng gridCenter;
 
     ArrayList<ArrayList<LatLng>> points;
@@ -34,7 +34,7 @@ public class CircleGrid implements Grid {
     private static final int TRANSIT = 4000;
 
 
-    public CircleGrid(LatLng point, double time, int mode){
+    public CircleGrid(LatLng point, Double time, int mode){
 
 
         gridBaseTime = time;
@@ -67,6 +67,8 @@ public class CircleGrid implements Grid {
                 delta_max = 6;
                 break;
             case WALKING:
+//                delta_min = 18;
+//                delta_max = -10;
                 delta_min = 6;
                 delta_max = 0;
                 break;

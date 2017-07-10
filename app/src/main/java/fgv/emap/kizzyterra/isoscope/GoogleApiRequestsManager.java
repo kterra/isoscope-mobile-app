@@ -29,7 +29,10 @@ import java.util.HashMap;
 
 public class GoogleApiRequestsManager {
 
-    public static final String API_KEY = "AIzaSyA5dG_IbvaxJYqNtDOiIFPq6J0PtdX1Fp8";
+
+
+    //public static final String API_KEY = "AIzaSyA5dG_IbvaxJYqNtDOiIFPq6J0PtdX1Fp8";
+    public static final String API_KEY = "AIzaSyC8Yfp5GFaQjEdcjVFsI0upBuoGHoiI3XQ";
     public static final String DISTANCE_MATRIX_PREFIX = "https://maps.googleapis.com/maps/api/distancematrix/json";
     public static final String GEOCODE_PREFIX = "https://maps.googleapis.com/maps/api/geocode/json";
     public static final String DIRECTIONS_PREFIX = "https://maps.googleapis.com/maps/api/directions/json";
@@ -138,11 +141,11 @@ public class GoogleApiRequestsManager {
 
             HttpRequest request = requestFactory.buildGetRequest(url);
             HttpResponse httpResponse = request.execute();
-
             return parseDirectionsJson(httpResponse.parseAsString(), ctx);
 
 
         } catch (Exception ex) {
+            Log.e("GoogleApiRequester", ex.getMessage() );
             ex.printStackTrace();
         }
         return null;
@@ -207,6 +210,7 @@ public class GoogleApiRequestsManager {
 
             if(!json.getString("status").equals(OK)){
                 new Exception("Route Exception");
+                Log.e("GoogleApiRequester", json.getString("status"));
             }
 
             JSONArray jsonRoutes = json.getJSONArray("routes");
@@ -273,7 +277,8 @@ public class GoogleApiRequestsManager {
             }
 
         } catch (JSONException e) {
-            new JSONException("JSONException. Msg: "+e.getMessage());
+            Log.e("GoogleApiRequester", e.getMessage());
+
         }
         return duration;
 

@@ -4,11 +4,13 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
+import android.support.annotation.StringDef;
 import android.support.design.widget.FloatingActionButton;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -77,7 +79,7 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
 
     private GoogleApiClient mGoogleApiClient;
     private HashMap<ArrayList<LatLng>, ArrayList<Tuple>> isochroneData;
-    private double isochroneDuration = 0.0;
+    private Double isochroneDuration = 0.0;
     private double isochroneArea;
     private String isochroneCenterAddress;
     private LatLng isochroneCenterCoordinate;
@@ -116,10 +118,13 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
         int fragment = intent.getIntExtra(FRAGMENT_ID, 0);
 
         MODE = intent.getIntExtra(MODE_VALUE, 0);
+        Log.d(TAG, String.valueOf(MODE));
         isochroneDuration = intent.getDoubleExtra(TIME_VALUE, 0);
+        Log.d(TAG, String.valueOf(isochroneDuration));
         isochroneCenterAddress = intent.getStringExtra(CENTER_ADDRESS_VALUE);
+        Log.d(TAG, String.valueOf(isochroneCenterAddress));
         isochroneCenterCoordinate = new LatLng( intent.getDoubleExtra(CENTER_LAT_VALUE,0), intent.getDoubleExtra(CENTER_LONG_VALUE,0));
-
+        Log.d(TAG, String.valueOf(isochroneCenterCoordinate));
 
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -176,6 +181,9 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
         drawMarker("100", isochroneCenterCoordinate);
 
         grid = new CircleGrid(isochroneCenterCoordinate, isochroneDuration, MODE);
+        Log.d(TAG + "2", String.valueOf(isochroneCenterCoordinate));
+        Log.d(TAG + "2", String.valueOf(isochroneDuration));
+        Log.d(TAG+ "2", String.valueOf(MODE));
         new GetTimeDataForGrid().execute();
 
 
@@ -360,9 +368,6 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
                 ArrayList<Double> times = new ArrayList<>();
 
                 for (int angleIndex=0; angleIndex < nAngles; angleIndex++){
-                    LatLng coordinate = row.get(angleIndex);
-                    Log.d(TAG, "apirequester");
-                    times.add(angleIndex, GoogleApiRequestsManager.getDirections(origin, coordinate, MODE, MapsActivity.this));
                     try {
                         Thread.currentThread();
                         Thread.sleep(1000);
@@ -370,6 +375,10 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
                         // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
+                    LatLng coordinate = row.get(angleIndex);
+                    Log.d(TAG, "apirequester");
+                    times.add(angleIndex, GoogleApiRequestsManager.getDirections(origin, coordinate, MODE, MapsActivity.this));
+                    Log.d(TAG, times.toString());
                 }
                 timeData.add(radiusIndex, times);
 
@@ -390,10 +399,10 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
            // drawGrid(grid.getPointsByTime());
 
             isochroneData = grid.getIsochroneSegments();
+            Log.d(TAG, String.valueOf(grid.gridBaseTime));
             drawIsochroneBySegment(isochroneData);
 
             ArrayList<LatLng> isochrone = (ArrayList<LatLng>) isochroneData.keySet().toArray()[0];
-            ArrayList<LatLng> convexHull = getConvexHull(isochrone);
             isochroneArea = SphericalUtil.computeArea(isochrone);
             Log.d(TAG, String.valueOf(isochroneArea));
 //            Log.d(TAG, String.valueOf(SphericalUtil.computeArea(convexHull)));
@@ -403,7 +412,15 @@ public class MapsActivity extends AppCompatActivity implements OnConnectionFaile
 
         }
     }
-
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event)
+    {
+        if ((keyCode == KeyEvent.KEYCODE_BACK))
+        {
+            finish();
+        }
+        return super.onKeyDown(keyCode, event);
+    }
 
 }
 
